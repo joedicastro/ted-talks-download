@@ -51,7 +51,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "28/07/2010"
-__version__ = "0.20"
+__version__ = "0.30"
 
 try:
     import os
@@ -87,6 +87,34 @@ def send_mail(content):
     server.quit()
     return
 
+def bes_unit_size(f_size):
+    """Get a size in bytes and convert it for the best unit for readability.
+    
+    Return two values:
+    
+    (int) bu_size -- Size of the path converted to the best unit for easy read
+    (str) unit -- The units (IEC) for bu_size (from bytes(2^0) to YiB(2^80))
+    
+    """
+    for exp in range(0, 90 , 10):
+        bu_size = f_size / pow(2.0, exp)
+        if int(bu_size) < 2 ** 10:
+            unit = {0:'bytes', 10:'KiB', 20:'MiB', 30:'GiB', 40:'TiB', 50:'PiB',
+                    60:'EiB', 70:'ZiB', 80:'YiB'}[exp]
+            break
+    return {'s':bu_size, 'u':unit}
+
+def get_size(the_path):
+    """Get size of a directory tree or a file in bytes."""
+    path_size = 0
+    if os.path.isfile(the_path):
+        path_size = os.path.getsize(the_path)
+    for path, dirs, files in os.walk(the_path):
+        for fil in files:
+            filename = os.path.join(path, fil)
+            path_size += os.path.getsize(filename)
+    return path_size
+
 def get_sub(tt_id , tt_intro, lang):
     """Get TED Subtitle in JSON format & convert it to SRT Subtitle
     Obtiene el subtitulo de TED en formato JSON y lo convierte al formato SRT"""
@@ -113,7 +141,6 @@ def get_sub(tt_id , tt_intro, lang):
             srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
             caption_idx += 1
     return srt_content
-
 
 def check_subs(ttalk, v_name):
     """Check if the subtitles for the talk are downloaded, if not try to get 
@@ -149,7 +176,8 @@ def get_video(ttk, vid_url, vid_name):
     v_log += ' ({0})\n\n'.format(ttk.itunes_duration)
     v_log += '{0}\n\n'.format(ttk.content[0].value)
     v_log += 'file://{0}/{1}\n'.format(os.getcwd(), vid_name)
-    v_log += '{0:.1f} MiB\n\n'.format(float(ttk.enclosures[0].length) / 2 ** 20)
+    vid_size = bes_unit_size(get_size(vid_name))
+    v_log += '{0:.2f} {1}\n\n'.format(vid_size['s'], vid_size['u'])
     return v_log
 
 def main(log=''):
@@ -202,7 +230,6 @@ def main(log=''):
     ## If logs any activity, sends the information mail 
     if log:
         send_mail(log)
-
 
 if __name__ == "__main__":
     main()
