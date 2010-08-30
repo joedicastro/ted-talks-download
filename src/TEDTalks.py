@@ -51,7 +51,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "28/07/2010"
-__version__ = "0.10"
+__version__ = "0.20"
 
 try:
     import os
@@ -61,7 +61,9 @@ try:
     import re
     import glob
     import feedparser
+    import smtplib
     import time
+    import socket
     import pickle
 except ImportError:
     # Checks the installation of the necessary python modules 
@@ -70,6 +72,20 @@ except ImportError:
     \n{0}
     \nYou need to install this module\nQuitting...""").format(sys.exc_info()[1])
     sys.exit(-2)
+
+
+def send_mail(content):
+    """Send the mail with the log to the user's local mailbox
+    Envia el correo con el informe al buzón del usuario local"""
+    # Set the local mail address for the script' user
+    email = '{0}@{1}'.format(os.getenv('LOGNAME'), socket.gethostname())
+    subject = 'Download TED Talks - {0}'.format(time.strftime('%A %x, %X'))
+    msg = ("From: {0}\nTo: {0}\nSubject: {1}\n{2}".
+           format(email, subject, content))
+    server = smtplib.SMTP('localhost')
+    server.sendmail(email, email, msg)
+    server.quit()
+    return
 
 def get_sub(tt_id , tt_intro, lang):
     """Get TED Subtitle in JSON format & convert it to SRT Subtitle
@@ -160,8 +176,7 @@ def main(log=''):
     ## If the feed is erroneous or occurs a http or network error, log and exit!
     if ttalk_feed.bozo:
         log += 'An error occurred: {0}'.format(ttalk_feed.bozo_exception)
-        with open('log', 'ab') as file_log:
-            file_log.write(log)
+        send_mail(log)
         sys.exit(1)
 
     ## If correct, process the feed entries
@@ -184,9 +199,9 @@ def main(log=''):
         with open('.data.pkl', 'wb') as output:
             pickle.dump(last, output)
 
-    ## Store the log
-    with open('log', 'ab') as file_log:
-        file_log.write(log)
+    ## If logs any activity, sends the information mail 
+    if log:
+        send_mail(log)
 
 
 if __name__ == "__main__":
