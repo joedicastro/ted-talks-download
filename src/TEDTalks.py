@@ -50,7 +50,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "28/07/2010"
-__version__ = "0.31"
+__version__ = "0.32"
 
 try:
     import os
@@ -181,8 +181,18 @@ def get_video(ttk, vid_url, vid_name):
 
 def main(log=''):
     """main section"""
+
+#===============================================================================
+# SCRIPT PARAMETERS
+#===============================================================================
+
     ## The directory to store the videos and subs
     ttalk_vid_dir = '/your/path/to/TED/Talks/Videos'
+
+#===============================================================================
+# END PARAMETERS
+#===============================================================================    
+
     os.chdir(ttalk_vid_dir)
 
     ## Get a list of the current TED Talks downloaded in the dir
