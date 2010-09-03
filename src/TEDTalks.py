@@ -2,8 +2,7 @@
 # -*- coding: utf8 -*-
 
 """
-    TEDTalks.py:
-    /home/enxebree/workspace/TED_talks/src/TEDSubtitles.py
+    TEDTalks.py: Automate download new HD TED Talks by its RSS Feed
 """
 
 #===============================================================================
@@ -51,7 +50,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "28/07/2010"
-__version__ = "0.30"
+__version__ = "0.31"
 
 try:
     import os

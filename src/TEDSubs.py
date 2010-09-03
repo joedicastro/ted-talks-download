@@ -3,7 +3,6 @@
 
 """
     TEDSubs.py: Downloads a TED Talk' subtitles and videos by it's url
-    /home/enxebree/workspace/TED_talks/src/TEDSubs.py
 """
 
 #===============================================================================
@@ -51,7 +50,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "31/07/2010"
-__version__ = "0.10"
+__version__ = "0.11"
 
 try:
     import optparse
