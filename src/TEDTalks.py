@@ -50,7 +50,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "28/07/2010"
-__version__ = "0.4"
+__version__ = "0.5"
 
 try:
     import os
@@ -129,7 +129,10 @@ def get_sub(tt_id , tt_intro, lang):
     srt_content = ''
     tt_url = 'http://www.ted.com/talks'
     sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, lang)
-    json_object = json.loads(urllib.urlopen(sub_url).read()) ## Get JSON sub
+    try:
+        json_object = json.loads(urllib.urlopen(sub_url).read()) ## Get JSON sub
+    except ValueError:
+        return
     if 'captions' in json_object:
         caption_idx = 1
         for caption in json_object['captions'] :
