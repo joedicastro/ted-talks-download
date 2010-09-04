@@ -50,7 +50,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "28/07/2010"
-__version__ = "0.32"
+__version__ = "0.4"
 
 try:
     import os
@@ -64,6 +64,7 @@ try:
     import time
     import socket
     import pickle
+    import platform
 except ImportError:
     # Checks the installation of the necessary python modules 
     # Comprueba si todos los módulos necesarios están instalados
@@ -186,17 +187,21 @@ def main(log=''):
 # SCRIPT PARAMETERS
 #===============================================================================
 
-    ## The directory to store the videos and subs
+    ## The directory to store the videos and subs. 
+    # For Windows change the character '\' for the character '/', I know is 
+    # akward but is because how escape strings python
     ttalk_vid_dir = '/your/path/to/TED/Talks/Videos'
 
 #===============================================================================
 # END PARAMETERS
-#===============================================================================    
+#===============================================================================
 
-    os.chdir(ttalk_vid_dir)
+    os.chdir(os.path.normpath(ttalk_vid_dir))
 
     ## Get a list of the current TED Talks downloaded in the dir
     videos = glob.glob('*.mp4')
+
+    is_windows = True if platform.system() == 'Windows' else False
 
     ## Get the last download Talk video date
     try:
@@ -213,7 +218,8 @@ def main(log=''):
     ## If the feed is erroneous or occurs a http or network error, log and exit!
     if ttalk_feed.bozo:
         log += 'An error occurred: {0}'.format(ttalk_feed.bozo_exception)
-        send_mail(log)
+        if not is_windows:
+            send_mail(log)
         sys.exit(1)
 
     ## If correct, process the feed entries
@@ -237,8 +243,9 @@ def main(log=''):
             pickle.dump(last, output)
 
     ## If logs any activity, sends the information mail 
-    if log:
+    if log and not is_windows:
         send_mail(log)
 
 if __name__ == "__main__":
     main()
+
