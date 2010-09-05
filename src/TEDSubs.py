@@ -50,20 +50,20 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "31/07/2010"
-__version__ = "0.2"
+__version__ = "0.21"
 
 try:
-    import optparse
     import sys
+    import os
+    import optparse
     import json
     import urllib
     import re
 except ImportError:
     # Checks the installation of the necessary python modules 
     # Comprueba si todos los módulos necesarios están instalados
-    print ("""An error found importing one or more modules:
-    \n{0}
-    \nYou need to install this module\nQuitting...""").format(sys.exc_info()[1])
+    print((os.linesep * 2).join(["An error found importing one module:",
+    str(sys.exc_info()[1]), "You need to install it", "Stopping..."]))
     sys.exit(-2)
 
 def options():
