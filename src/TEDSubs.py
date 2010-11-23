@@ -71,14 +71,14 @@ def options():
     Define los argumentos y las opciones de la linea de comandos del script"""
     usage = """usage: %prog [Options] TEDTalkURL
     
-Where TEDTalkURL is the url of a TED Talk webpage
+    Where TEDTalkURL is the url of a TED Talk webpage
 
-For example:
+    For example:
 
-%prog -s  http://www.ted.com/talks/lang/eng/jamie_oliver.html
+    %prog -s  http://www.ted.com/talks/lang/eng/jamie_oliver.html
 
-Downloads only the subs for the Jamie Oliver's TED Talk, if wants the video too
-only needs to remove the "-s" option"""
+    Downloads only the subs for the Jamie Oliver's TED Talk, if wants the video too
+    only needs to remove the "-s" option"""
     desc = "Downloads the subtitles and the video (optional) for a TED Talk."
     parser = optparse.OptionParser(usage=usage, version="%prog " + __version__,
                                    description=desc)
