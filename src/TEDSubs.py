@@ -50,7 +50,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "24/11/2010"
-__version__ = "0.3"
+__version__ = "0.4"
 
 try:
     import sys
@@ -108,7 +108,7 @@ def get_sub(tt_id , tt_intro, sub):
     try:
         json_object = json.loads(urllib.urlopen(sub_url).read()) ## Get JSON sub
     except ValueError:
-        print "Subtitle '{0}' not avaliable or malformed json file".format(sub)
+        print "Subtitle '{0}' it's a malformed json file".format(sub)
         return
     if 'captions' in json_object:
         caption_idx = 1
@@ -120,6 +120,8 @@ def get_sub(tt_id , tt_intro, sub):
             text_line = '{0}'.format(caption['content'].encode("utf-8"))
             srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
             caption_idx += 1
+    elif 'status' in json_object:
+        print json_object['status']['message']
     return srt_content
 
 
