@@ -49,8 +49,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "31/07/2010"
-__version__ = "0.21"
+__date__ = "24/11/2010"
+__version__ = "0.3"
 
 try:
     import sys
@@ -77,8 +77,8 @@ def options():
 
     %prog -s  http://www.ted.com/talks/lang/eng/jamie_oliver.html
 
-    Downloads only the subs for the Jamie Oliver's TED Talk, if wants the video too
-    only needs to remove the "-s" option"""
+    Downloads only the subs for the Jamie Oliver's TED Talk, if wants the video 
+    too only needs to remove the "-s" option"""
     desc = "Downloads the subtitles and the video (optional) for a TED Talk."
     parser = optparse.OptionParser(usage=usage, version="%prog " + __version__,
                                    description=desc)
@@ -90,7 +90,7 @@ def options():
     return parser
 
 
-def get_sub(tt_id , tt_intro, lang):
+def get_sub(tt_id , tt_intro, sub):
     """Get TED Subtitle in JSON format & convert it to SRT Subtitle
     Obtiene el subtitulo de TED en formato JSON y lo convierte al formato SRT"""
 
@@ -103,10 +103,12 @@ def get_sub(tt_id , tt_intro, lang):
 
     srt_content = ''
     tt_url = 'http://www.ted.com/talks'
-    sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, lang)
+    sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id,
+                                                     sub.split('.')[1])
     try:
         json_object = json.loads(urllib.urlopen(sub_url).read()) ## Get JSON sub
     except ValueError:
+        print "Subtitle '{0}' not avaliable or malformed json file".format(sub)
         return
     if 'captions' in json_object:
         caption_idx = 1
@@ -131,11 +133,11 @@ def check_subs(tt_id, tt_intro, tt_video):
     subs = ("{0}.{1}.srt".format(tt_video[:-4], lang) for lang in
             ('eng', 'spa'))
     for sub in subs:
-        subtitle = get_sub(tt_id, tt_intro, sub.split('.')[1])
+        subtitle = get_sub(tt_id, tt_intro, sub)
         if subtitle:
             with open(sub, 'w') as srt_file:
                 srt_file.write(subtitle)
-            print "Subtitle {0} downloaded".format(sub)
+            print "Subtitle '{0}' downloaded".format(sub)
     return
 
 def get_video(vid_name):
