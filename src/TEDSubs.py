@@ -50,7 +50,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "24/11/2010"
-__version__ = "0.6"
+__version__ = "0.7"
 
 try:
     import sys
@@ -58,6 +58,7 @@ try:
     import optparse
     import json
     import urllib
+    import urllib2
     import re
 except ImportError:
     # Checks the installation of the necessary python modules 
@@ -106,7 +107,7 @@ def get_sub(tt_id , tt_intro, sub):
     lang = sub.split('.')[1]
     sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, lang)
     try:
-        json_object = json.loads(urllib.urlopen(sub_url).read()) ## Get JSON sub
+        json_object = json.loads(urllib2.urlopen(sub_url).read()) ##Get JSON sub
     except ValueError:
         print "Subtitle '{0}' it's a malformed json file".format(sub)
         return
@@ -166,7 +167,7 @@ def main():
     else:
         tedtalk_webpage = args[0]
         ## Reads the talk web page, to search the talk's values
-        ttalk_webpage = urllib.urlopen(tedtalk_webpage).read()
+        ttalk_webpage = urllib2.urlopen(tedtalk_webpage).read()
         ttalk_intro = int(re.search("introDuration:(\d+),",
                                     ttalk_webpage).group(1))
         ttalk_id = int(re.search("talkID = (\d+);", ttalk_webpage).group(1))
