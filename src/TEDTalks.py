@@ -49,14 +49,15 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "28/07/2010"
-__version__ = "0.51"
+__date__ = "24/11/2010"
+__version__ = "0.6"
 
 try:
     import os
     import sys
     import json
     import urllib
+    import urllib2
     import re
     import glob
     import feedparser
@@ -114,7 +115,7 @@ def get_size(the_path):
             path_size += os.path.getsize(filename)
     return path_size
 
-def get_sub(tt_id , tt_intro, lang):
+def get_sub(tt_id , tt_intro, sub):
     """Get TED Subtitle in JSON format & convert it to SRT Subtitle
     Obtiene el subtitulo de TED en formato JSON y lo convierte al formato SRT"""
 
@@ -126,30 +127,38 @@ def get_sub(tt_id , tt_intro, lang):
         return right_srt_time
 
     srt_content = ''
+    sub_log = ''
     tt_url = 'http://www.ted.com/talks'
+    lang = sub.split('.')[1]
     sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, lang)
     try:
-        json_object = json.loads(urllib.urlopen(sub_url).read()) ## Get JSON sub
+        json_object = json.loads(urllib2.urlopen(sub_url).read()) ##Get JSON sub
     except ValueError:
+        sub_log += "Subtitle '{0}' it's a malformed json file".format(sub)
         return
     if 'captions' in json_object:
         caption_idx = 1
-        for caption in json_object['captions'] :
-            start = tt_intro + caption['startTime']
-            end = start + caption['duration']
-            idx_line = '{0}'.format(caption_idx)
-            time_line = '{0} --> {1}'.format(srt_time(start), srt_time(end))
-            text_line = '{0}'.format(caption['content'].encode("utf-8"))
-            srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
-            caption_idx += 1
-    return srt_content
+        if not json_object['captions']:
+            sub_log += "Subtitle '{0}' not completed".format(sub)
+        else:
+            for caption in json_object['captions'] :
+                start = tt_intro + caption['startTime']
+                end = start + caption['duration']
+                idx_line = '{0}'.format(caption_idx)
+                time_line = '{0} --> {1}'.format(srt_time(start), srt_time(end))
+                text_line = '{0}'.format(caption['content'].encode("utf-8"))
+                srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
+                caption_idx += 1
+    elif 'status' in json_object:
+        sub_log += "TED error message for {0}:".format(sub, os)
+        sub_log += json_object['status']['message'] + os.linesep
+    return srt_content, sub_log
 
 def check_subs(ttalk, v_name):
     """Check if the subtitles for the talk are downloaded, if not try to get 
     them. Checks it for english and spanish languages
     Comprueba si los subtitulos para la charla estan descargados, si no, intenta
     obtenerlos. Lo comprueba para los idiomas español e ingles"""
-    s_log = '' # Begins the log
     ## Get the names for the subtitles (for english and spanish languages) only 
     # if they not are already downloaded
     subs = (s_name for s_name in
@@ -158,9 +167,9 @@ def check_subs(ttalk, v_name):
 
     for sub in subs:
         ## Reads the talk web page, to search the talk's intro duration
-        tt_webpage = urllib.urlopen(ttalk.feedburner_origlink).read()
+        tt_webpage = urllib2.urlopen(ttalk.feedburner_origlink).read()
         tt_intro = int(re.search("introDuration:(\d+),", tt_webpage).group(1))
-        subtitle = get_sub(ttalk.id.split(':')[-1], tt_intro, sub.split('.')[1])
+        subtitle, s_log = get_sub(ttalk.id.split(':')[-1], tt_intro, sub)
         if subtitle:
             with open(sub, 'w') as srt_file:
                 srt_file.write(subtitle)
