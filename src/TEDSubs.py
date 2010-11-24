@@ -50,7 +50,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "24/11/2010"
-__version__ = "0.5"
+__version__ = "0.6"
 
 try:
     import sys
@@ -113,17 +113,19 @@ def get_sub(tt_id , tt_intro, sub):
     if 'captions' in json_object:
         caption_idx = 1
         if not json_object['captions']:
-            print 'Subtitle {0} not completed'.format(sub)
-        for caption in json_object['captions'] :
-            start = tt_intro + caption['startTime']
-            end = start + caption['duration']
-            idx_line = '{0}'.format(caption_idx)
-            time_line = '{0} --> {1}'.format(srt_time(start), srt_time(end))
-            text_line = '{0}'.format(caption['content'].encode("utf-8"))
-            srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
-            caption_idx += 1
+            print "Subtitle '{0}' not completed".format(sub)
+        else:
+            for caption in json_object['captions'] :
+                start = tt_intro + caption['startTime']
+                end = start + caption['duration']
+                idx_line = '{0}'.format(caption_idx)
+                time_line = '{0} --> {1}'.format(srt_time(start), srt_time(end))
+                text_line = '{0}'.format(caption['content'].encode("utf-8"))
+                srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
+                caption_idx += 1
     elif 'status' in json_object:
-        print json_object['status']['message']
+        print "TED error message for {0}:".format(sub, os)
+        print json_object['status']['message'] + os.linesep
     return srt_content
 
 
