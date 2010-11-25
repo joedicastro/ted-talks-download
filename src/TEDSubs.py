@@ -14,7 +14,7 @@
 #===============================================================================
 
 #===============================================================================
-#       Copyright 2010 joe di castro <joe@joedicastro.com>
+#    Copyright 2010 joe di castro <joe@joedicastro.com>
 #       
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -50,14 +50,17 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "25/11/2010"
-__version__ = "0.9"
+__version__ = "1.0"
 
 try:
     import sys
     import os
     import optparse
     import json
-    from re import search
+    import platform
+    import urllib
+    import urllib2
+    from re import search, findall
     from subprocess import Popen, PIPE
 except ImportError:
     # Checks the installation of the necessary python modules 
@@ -89,6 +92,43 @@ def options():
 
     return parser
 
+def check_exec_posix_win(prog):
+    """Check if the program is installed.
+
+    Returns three values:
+    
+    (boolean) found - True if the program is installed 
+    (dict) windows_paths - a dictionary of executables/paths (keys/values)
+    (boolean) is_windows - True it's a Windows OS, False it's a *nix OS
+
+    """
+    found = True
+    windows_paths = {}
+    is_windows = True if platform.system() == 'Windows' else False
+    # get all the drive unit letters if the OS is Windows
+    windows_drives = findall(r'(\w:)\\',
+                             Popen('fsutil fsinfo drives', stdout=PIPE).
+                             communicate()[0]) if is_windows else None
+    if is_windows:
+        # Set all commands to search the executable in all drives
+        win_cmds = ['dir /B /S {0}\*{1}.exe'.format(letter, prog) for letter in
+                    windows_drives]
+        # Get the first location (usually in C:) of the all founded where
+        # the executable exists
+        exe_paths = (''.join([Popen(cmd, stdout=PIPE, stderr=PIPE,
+                                    shell=True).communicate()[0] for
+                                    cmd in win_cmds])).split(os.linesep)[0]
+        # Assign the path to the executable or report not found if empty
+        if exe_paths:
+            windows_paths[prog] = exe_paths
+        else:
+            found = False
+    else:
+        try:
+            Popen([prog, '--help'], stdout=PIPE, stderr=PIPE)
+        except OSError:
+            found = False
+    return found, windows_paths, is_windows
 
 def get_sub(tt_id , tt_intro, sub):
     """Get TED Subtitle in JSON format & convert it to SRT Subtitle
@@ -105,14 +145,18 @@ def get_sub(tt_id , tt_intro, sub):
     tt_url = 'http://www.ted.com/talks'
     lang = sub.split('.')[1]
     sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, lang)
-    json_file = Popen(['wget', '-q', '-O', '-', sub_url],
-                      stdout=PIPE).stdout.readlines()
-    if json_file:
-        for line in json_file:
-            if line.find('captions') == -1 and line.find('status') == -1:
-                json_file.remove(line)
+    if FOUND:
+        json_file = Popen([WGET, '-q', '-O', '-', sub_url],
+                          stdout=PIPE).stdout.readlines()
+
+        if json_file:
+            for line in json_file:
+                if line.find('captions') == -1 and line.find('status') == -1:
+                    json_file.remove(line)
+        else:
+            print("Subtitle '{0}' not found".format(sub))
     else:
-        print("Subtitle '{0}' not found".format(sub))
+        json_file = urllib2.urlopen(sub_url).readlines()
     try:
         json_object = json.loads(json_file[0]) ##Get JSON sub
         if 'captions' in json_object:
@@ -157,8 +201,12 @@ def get_video(vid_name):
     Obtiene el video de la TED Talk"""
     root_url = 'http://video.ted.com/talks/podcast/'
     print("Donwloading video...")
-    Popen(['wget', '-q', '-O', '{0}'.format(vid_name),
-           '{0}{1}'.format(root_url, vid_name) ], stdout=PIPE).stdout.read()
+    if FOUND:
+        Popen([WGET, '-q', '-O', '{0}'.format(vid_name),
+               '{0}{1}'.format(root_url, vid_name) ], stdout=PIPE).stdout.read()
+    else:
+        urllib.urlretrieve('{0}{1}'.format(root_url, vid_name),
+                           '{0}'.format(vid_name))
     print("Video {0} downloaded".format(vid_name))
     return
 
@@ -173,8 +221,11 @@ def main():
     else:
         tedtalk_webpage = args[0]
         ## Reads the talk web page, to search the talk's values
-        ttalk_webpage = Popen(['wget', '-q', '-O', '-', tedtalk_webpage],
+        if FOUND:
+            ttalk_webpage = Popen([WGET, '-q', '-O', '-', tedtalk_webpage],
                                   stdout=PIPE).stdout.read()
+        else:
+            ttalk_webpage = urllib2.urlopen(tedtalk_webpage).read()
         if ttalk_webpage:
             try:
                 ttalk_intro = int(search("introDuration:(\d+),",
@@ -199,4 +250,7 @@ def main():
 
 
 if __name__ == "__main__":
+    FOUND, WIN_EXECS, WIN_OS = check_exec_posix_win('wget')
+    if FOUND:
+        WGET = WIN_EXECS['wget'] if WIN_OS else 'wget'
     main()
