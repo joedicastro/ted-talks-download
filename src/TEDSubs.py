@@ -14,7 +14,7 @@
 #===============================================================================
 
 #===============================================================================
-#       Copyright 2010 joe di castro <joe@joedicastro.com>
+#    Copyright 2010 joe di castro <joe@joedicastro.com>
 #       
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -50,16 +50,18 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "25/11/2010"
-__version__ = "0.8"
+__version__ = "1.0"
 
 try:
     import sys
     import os
     import optparse
     import json
+    import platform
     import urllib
     import urllib2
-    import re
+    from re import search, findall
+    from subprocess import Popen, PIPE
 except ImportError:
     # Checks the installation of the necessary python modules 
     # Comprueba si todos los módulos necesarios están instalados
@@ -90,6 +92,43 @@ def options():
 
     return parser
 
+def check_exec_posix_win(prog):
+    """Check if the program is installed.
+
+    Returns three values:
+    
+    (boolean) found - True if the program is installed 
+    (dict) windows_paths - a dictionary of executables/paths (keys/values)
+    (boolean) is_windows - True it's a Windows OS, False it's a *nix OS
+
+    """
+    found = True
+    windows_paths = {}
+    is_windows = True if platform.system() == 'Windows' else False
+    # get all the drive unit letters if the OS is Windows
+    windows_drives = findall(r'(\w:)\\',
+                             Popen('fsutil fsinfo drives', stdout=PIPE).
+                             communicate()[0]) if is_windows else None
+    if is_windows:
+        # Set all commands to search the executable in all drives
+        win_cmds = ['dir /B /S {0}\*{1}.exe'.format(letter, prog) for letter in
+                    windows_drives]
+        # Get the first location (usually in C:) of the all founded where
+        # the executable exists
+        exe_paths = (''.join([Popen(cmd, stdout=PIPE, stderr=PIPE,
+                                    shell=True).communicate()[0] for
+                                    cmd in win_cmds])).split(os.linesep)[0]
+        # Assign the path to the executable or report not found if empty
+        if exe_paths:
+            windows_paths[prog] = exe_paths
+        else:
+            found = False
+    else:
+        try:
+            Popen([prog, '--help'], stdout=PIPE, stderr=PIPE)
+        except OSError:
+            found = False
+    return found, windows_paths, is_windows
 
 def get_sub(tt_id , tt_intro, sub):
     """Get TED Subtitle in JSON format & convert it to SRT Subtitle
@@ -106,16 +145,24 @@ def get_sub(tt_id , tt_intro, sub):
     tt_url = 'http://www.ted.com/talks'
     lang = sub.split('.')[1]
     sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, lang)
-    try:
-        json_object = json.loads(urllib2.urlopen(sub_url).read()) ##Get JSON sub
-    except ValueError:
-        print("Subtitle '{0}' it's a malformed json file".format(sub))
-        return
-    if 'captions' in json_object:
-        caption_idx = 1
-        if not json_object['captions']:
-            print("Subtitle '{0}' not completed".format(sub))
+    if FOUND:
+        json_file = Popen([WGET, '-q', '-O', '-', sub_url],
+                          stdout=PIPE).stdout.readlines()
+
+        if json_file:
+            for line in json_file:
+                if line.find('captions') == -1 and line.find('status') == -1:
+                    json_file.remove(line)
         else:
+            print("Subtitle '{0}' not found".format(sub))
+    else:
+        json_file = urllib2.urlopen(sub_url).readlines()
+    try:
+        json_object = json.loads(json_file[0]) ##Get JSON sub
+        if 'captions' in json_object:
+            caption_idx = 1
+            if not json_object['captions']:
+                print("Subtitle '{0}' not completed".format(sub))
             for caption in json_object['captions'] :
                 start = tt_intro + caption['startTime']
                 end = start + caption['duration']
@@ -124,9 +171,11 @@ def get_sub(tt_id , tt_intro, sub):
                 text_line = '{0}'.format(caption['content'].encode("utf-8"))
                 srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
                 caption_idx += 1
-    elif 'status' in json_object:
-        print("TED error message for {0}:".format(sub, os))
-        print(json_object['status']['message'] + os.linesep)
+        elif 'status' in json_object:
+            print("TED error message for {0}:".format(sub, os))
+            print(json_object['status']['message'] + os.linesep)
+    except ValueError:
+        print("Subtitle '{0}' it's a malformed json file".format(sub))
     return srt_content
 
 
@@ -152,8 +201,12 @@ def get_video(vid_name):
     Obtiene el video de la TED Talk"""
     root_url = 'http://video.ted.com/talks/podcast/'
     print("Donwloading video...")
-    urllib.urlretrieve('{0}{1}'.format(root_url, vid_name),
-                       '{0}'.format(vid_name))
+    if FOUND:
+        Popen([WGET, '-q', '-O', '{0}'.format(vid_name),
+               '{0}{1}'.format(root_url, vid_name) ], stdout=PIPE).stdout.read()
+    else:
+        urllib.urlretrieve('{0}{1}'.format(root_url, vid_name),
+                           '{0}'.format(vid_name))
     print("Video {0} downloaded".format(vid_name))
     return
 
@@ -161,31 +214,35 @@ def main():
     """main section"""
     # first, parse the options & arguments
     (opts, args) = options().parse_args()
-    issues_URL = "http://code.joedicastro.com/ted-talks-download/issues/new"
+    issues_url = "http://code.joedicastro.com/ted-talks-download/issues/new"
 
     if not args:
         options().print_help()
     else:
         tedtalk_webpage = args[0]
         ## Reads the talk web page, to search the talk's values
-        try:
+        if FOUND:
+            ttalk_webpage = Popen([WGET, '-q', '-O', '-', tedtalk_webpage],
+                                  stdout=PIPE).stdout.read()
+        else:
             ttalk_webpage = urllib2.urlopen(tedtalk_webpage).read()
-        except urllib2.HTTPError:
+        if ttalk_webpage:
+            try:
+                ttalk_intro = int(search("introDuration:(\d+),",
+                                         ttalk_webpage).group(1))
+                ttalk_id = int(search("talkID = (\d+);",
+                                      ttalk_webpage).group(1))
+                ttalk_vid = search('hs:"(?:\w+:)?talks/dynamic/(.*)-high.\w+"',
+                                   ttalk_webpage).group(1) + '_480.mp4'
+            except AttributeError:
+                print("Some data not found in this URL:{0}{1}{0}"
+                      "Please report this error and provides the URL to check "
+                      " at:{0}{2}{0}""Thanks for helping to fix errors."
+                      "{0}".format(os.linesep * 2, tedtalk_webpage, issues_url))
+                sys.exit(1)
+        else:
             print("Are you sure this is the right URL?")
             sys.exit(1)
-        try:
-            ttalk_intro = int(re.search("introDuration:(\d+),",
-                                        ttalk_webpage).group(1))
-            ttalk_id = int(re.search("talkID = (\d+);", ttalk_webpage).group(1))
-            ttalk_vid = re.search('hs:"(?:\w+:)?talks/dynamic/(.*)-high.\w+"',
-                                  ttalk_webpage).group(1) + '_480.mp4'
-        except AttributeError:
-            print("Some data not found in this URL:{0}{1}{0}"
-                  "Please report this error and provides the URL to check at:"
-                  "{0}{2}{0}""Thanks for helping to fix errors."
-                  "{0}".format(os.linesep * 2, tedtalk_webpage, issues_URL))
-            sys.exit(1)
-
         #@ Get subs (and video)
         check_subs(ttalk_id, ttalk_intro, ttalk_vid)
         if not opts.no_video:
@@ -193,4 +250,7 @@ def main():
 
 
 if __name__ == "__main__":
+    FOUND, WIN_EXECS, WIN_OS = check_exec_posix_win('wget')
+    if FOUND:
+        WGET = WIN_EXECS['wget'] if WIN_OS else 'wget'
     main()
