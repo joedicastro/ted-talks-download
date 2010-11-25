@@ -174,7 +174,7 @@ def get_sub(tt_id , tt_intro, sub):
                 srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
                 caption_idx += 1
         elif 'status' in json_object:
-            print("TED error message for {0}:".format(sub, os))
+            print("TED error message for {0}:".format(sub))
             print(json_object['status']['message'] + os.linesep)
     except ValueError:
         print("Subtitle '{0}' it's a malformed json file".format(sub))
