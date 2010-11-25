@@ -145,6 +145,7 @@ def get_sub(tt_id , tt_intro, sub):
     tt_url = 'http://www.ted.com/talks'
     lang = sub.split('.')[1]
     sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, lang)
+    ## Get JSON sub
     if FOUND:
         json_file = Popen([WGET, '-q', '-O', '-', sub_url],
                           stdout=PIPE).stdout.readlines()
@@ -157,8 +158,9 @@ def get_sub(tt_id , tt_intro, sub):
             print("Subtitle '{0}' not found".format(sub))
     else:
         json_file = urllib2.urlopen(sub_url).readlines()
+
     try:
-        json_object = json.loads(json_file[0]) ##Get JSON sub
+        json_object = json.loads(json_file[0])
         if 'captions' in json_object:
             caption_idx = 1
             if not json_object['captions']:
@@ -203,7 +205,7 @@ def get_video(vid_name):
     print("Donwloading video...")
     if FOUND:
         Popen([WGET, '-q', '-O', '{0}'.format(vid_name),
-               '{0}{1}'.format(root_url, vid_name) ], stdout=PIPE).stdout.read()
+               '{0}{1}'.format(root_url, vid_name)], stdout=PIPE).stdout.read()
     else:
         urllib.urlretrieve('{0}{1}'.format(root_url, vid_name),
                            '{0}'.format(vid_name))

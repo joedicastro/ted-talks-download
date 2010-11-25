@@ -50,7 +50,7 @@
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
 __date__ = "24/11/2010"
-__version__ = "0.6"
+__version__ = "0.7"
 
 try:
     import os
@@ -58,7 +58,6 @@ try:
     import json
     import urllib
     import urllib2
-    import re
     import glob
     import feedparser
     import smtplib
@@ -66,6 +65,8 @@ try:
     import socket
     import pickle
     import platform
+    from re import search, findall
+    from subprocess import Popen, PIPE
 except ImportError:
     # Checks the installation of the necessary python modules 
     # Comprueba si todos los módulos necesarios están instalados
@@ -73,6 +74,43 @@ except ImportError:
     str(sys.exc_info()[1]), "You need to install it", "Stopping..."]))
     sys.exit(-2)
 
+def check_exec_posix_win(prog):
+    """Check if the program is installed.
+
+    Returns three values:
+    
+    (boolean) found - True if the program is installed 
+    (dict) windows_paths - a dictionary of executables/paths (keys/values)
+    (boolean) is_windows - True it's a Windows OS, False it's a *nix OS
+
+    """
+    found = True
+    windows_paths = {}
+    is_windows = True if platform.system() == 'Windows' else False
+    # get all the drive unit letters if the OS is Windows
+    windows_drives = findall(r'(\w:)\\',
+                             Popen('fsutil fsinfo drives', stdout=PIPE).
+                             communicate()[0]) if is_windows else None
+    if is_windows:
+        # Set all commands to search the executable in all drives
+        win_cmds = ['dir /B /S {0}\*{1}.exe'.format(letter, prog) for letter in
+                    windows_drives]
+        # Get the first location (usually in C:) of the all founded where
+        # the executable exists
+        exe_paths = (''.join([Popen(cmd, stdout=PIPE, stderr=PIPE,
+                                    shell=True).communicate()[0] for
+                                    cmd in win_cmds])).split(os.linesep)[0]
+        # Assign the path to the executable or report not found if empty
+        if exe_paths:
+            windows_paths[prog] = exe_paths
+        else:
+            found = False
+    else:
+        try:
+            Popen([prog, '--help'], stdout=PIPE, stderr=PIPE)
+        except OSError:
+            found = False
+    return found, windows_paths, is_windows
 
 def send_mail(content):
     """Send the mail with the log to the user's local mailbox
@@ -131,16 +169,25 @@ def get_sub(tt_id , tt_intro, sub):
     tt_url = 'http://www.ted.com/talks'
     lang = sub.split('.')[1]
     sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, lang)
-    try:
-        json_object = json.loads(urllib2.urlopen(sub_url).read()) ##Get JSON sub
-    except ValueError:
-        sub_log += "Subtitle '{0}' it's a malformed json file".format(sub)
-        return
-    if 'captions' in json_object:
-        caption_idx = 1
-        if not json_object['captions']:
-            sub_log += "Subtitle '{0}' not completed".format(sub)
+    ## Get JSON sub
+    if FOUND:
+        json_file = Popen([WGET, '-q', '-O', '-', sub_url],
+                          stdout=PIPE).stdout.readlines()
+
+        if json_file:
+            for line in json_file:
+                if line.find('captions') == -1 and line.find('status') == -1:
+                    json_file.remove(line)
         else:
+            sub_log += "Subtitle '{0}' not found".format(sub)
+    else:
+        json_file = urllib2.urlopen(sub_url).readlines()
+    try:
+        json_object = json.loads(json_file[0])
+        if 'captions' in json_object:
+            caption_idx = 1
+            if not json_object['captions']:
+                sub_log += "Subtitle '{0}' not completed".format(sub)
             for caption in json_object['captions'] :
                 start = tt_intro + caption['startTime']
                 end = start + caption['duration']
@@ -149,9 +196,11 @@ def get_sub(tt_id , tt_intro, sub):
                 text_line = '{0}'.format(caption['content'].encode("utf-8"))
                 srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
                 caption_idx += 1
-    elif 'status' in json_object:
-        sub_log += "TED error message for {0}:".format(sub, os)
-        sub_log += json_object['status']['message'] + os.linesep
+        elif 'status' in json_object:
+            sub_log += "TED error message for {0}:".format(sub, os)
+            sub_log += json_object['status']['message'] + os.linesep
+    except ValueError:
+        sub_log += "Subtitle '{0}' it's a malformed json file".format(sub)
     return srt_content, sub_log
 
 def check_subs(ttalk, v_name):
@@ -167,8 +216,13 @@ def check_subs(ttalk, v_name):
 
     for sub in subs:
         ## Reads the talk web page, to search the talk's intro duration
-        tt_webpage = urllib2.urlopen(ttalk.feedburner_origlink).read()
-        tt_intro = int(re.search("introDuration:(\d+),", tt_webpage).group(1))
+        if FOUND:
+            tt_webpage = Popen([WGET, '-q', '-O', '-',
+                                ttalk.feedburner_origlink],
+                                stdout=PIPE).stdout.read()
+        else:
+            tt_webpage = urllib2.urlopen(ttalk.feedburner_origlink).read()
+        tt_intro = int(search("introDuration:(\d+),", tt_webpage).group(1))
         subtitle, s_log = get_sub(ttalk.id.split(':')[-1], tt_intro, sub)
         if subtitle:
             with open(sub, 'w') as srt_file:
@@ -179,7 +233,10 @@ def check_subs(ttalk, v_name):
 def get_video(ttk, vid_url, vid_name):
     """Gets the TED Talk video
     Obtiene el video de la TED Talk"""
-    urllib.urlretrieve(vid_url, vid_name)
+    if FOUND:
+        Popen([WGET, '-q', '-O', vid_name, vid_url], stdout=PIPE).stdout.read()
+    else:
+        urllib.urlretrieve(vid_url, vid_name)
     v_log = 'New TED Talk downloaded!\n'
     v_log += '{0}\n'.format('=' * 24)
     v_log += '{0}\n\n'.format(ttk.feedburner_origlink)
@@ -212,8 +269,6 @@ def main(log=''):
     ## Get a list of the current TED Talks downloaded in the dir
     videos = glob.glob('*.mp4')
 
-    is_windows = True if platform.system() == 'Windows' else False
-
     ## Get the last download Talk video date
     try:
         with open('.data.pkl', 'rb') as pkl_file:
@@ -229,7 +284,7 @@ def main(log=''):
     ## If the feed is erroneous or occurs a http or network error, log and exit!
     if ttalk_feed.bozo:
         log += 'An error occurred: {0}'.format(ttalk_feed.bozo_exception)
-        if not is_windows:
+        if not WIN_OS:
             send_mail(log)
         sys.exit(1)
 
@@ -254,9 +309,12 @@ def main(log=''):
             pickle.dump(last, output)
 
     ## If logs any activity, sends the information mail 
-    if log and not is_windows:
+    if log and not WIN_OS:
         send_mail(log)
 
 if __name__ == "__main__":
+    FOUND, WIN_EXECS, WIN_OS = check_exec_posix_win('wget')
+    if FOUND:
+        WGET = WIN_EXECS['wget'] if WIN_OS else 'wget'
     main()
 
