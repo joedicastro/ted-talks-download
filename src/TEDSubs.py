@@ -216,7 +216,7 @@ def main():
     """main section"""
     # first, parse the options & arguments
     (opts, args) = options().parse_args()
-    issues_url = "http://code.joedicastro.com/ted-talks-download/issues/new"
+    issue_url = "http://code.joedicastro.com/ted-talks-download/issues/new"
 
     if not args:
         options().print_help()
@@ -239,13 +239,13 @@ def main():
             except AttributeError:
                 if search("Best of the Web", ttalk_webpage):
                     print("This is a video from a external website. Video and"
-                          " subtitles not availables via this script, try at "
+                          " subtitles not available via this script, try at "
                           "the original site.")
                 else:
-                    print("Some data not found in this URL:{0}{1}{0}"
-                      "Please report this error and provides the URL to check "
-                      " at:{0}{2}{0}""Thanks for helping to fix errors."
-                      "{0}".format(os.linesep * 2, tedtalk_webpage, issues_url))
+                    print("Some data not found in this URL:{0}{1}{0}Please "
+                          "report this error and provides the URL to check at:"
+                          "{0}{2}{0}Thanks for helping to fix errors.{0}"
+                          "".format(os.linesep * 2, tedtalk_webpage, issue_url))
                 sys.exit(1)
         else:
             print("Are you sure this is the right URL?")
@@ -261,3 +261,4 @@ if __name__ == "__main__":
     if FOUND:
         WGET = WIN_EXECS['wget'] if WIN_OS else 'wget'
     main()
+
