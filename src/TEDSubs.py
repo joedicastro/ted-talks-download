@@ -49,8 +49,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "25/11/2010"
-__version__ = "1.0"
+__date__ = "26/11/2010"
+__version__ = "1.1"
 
 try:
     import sys
@@ -237,7 +237,12 @@ def main():
                 ttalk_vid = search('hs:"(?:\w+:)?talks/dynamic/(.*)-high.\w+"',
                                    ttalk_webpage).group(1) + '_480.mp4'
             except AttributeError:
-                print("Some data not found in this URL:{0}{1}{0}"
+                if search("Best of the Web", ttalk_webpage):
+                    print("This is a video from a external website. Video and"
+                          " subtitles not availables via this script, try at "
+                          "the original site.")
+                else:
+                    print("Some data not found in this URL:{0}{1}{0}"
                       "Please report this error and provides the URL to check "
                       " at:{0}{2}{0}""Thanks for helping to fix errors."
                       "{0}".format(os.linesep * 2, tedtalk_webpage, issues_url))
