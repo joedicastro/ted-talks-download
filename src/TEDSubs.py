@@ -49,8 +49,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "26/11/2010"
-__version__ = "1.1"
+__date__ = "27/11/2010"
+__version__ = "1.2"
 
 try:
     import sys
@@ -234,8 +234,8 @@ def main():
                                          ttalk_webpage).group(1))
                 ttalk_id = int(search("talkID = (\d+);",
                                       ttalk_webpage).group(1))
-                ttalk_vid = search('hs:"(?:\w+:)?talks/dynamic/(.*)-high.\w+"',
-                                   ttalk_webpage).group(1) + '_480.mp4'
+                ttalk_vid = search('hs:"(?:.+)?talks/(?:dynamic/)?(\w*)(?:-.+)?'
+                                   '.\w+"', ttalk_webpage).group(1) + '_480.mp4'
             except AttributeError:
                 if search("Best of the Web", ttalk_webpage):
                     print("This is a video from a external website. Video and"
