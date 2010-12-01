@@ -49,8 +49,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "25/11/2010"
-__version__ = "1.0"
+__date__ = "01/12/2010"
+__version__ = "1.3"
 
 try:
     import os
@@ -282,12 +282,12 @@ def check_exec_posix_win(prog):
     Returns three values:
     
     (boolean) found - True if the program is installed 
-    (dict) windows_paths - a dictionary of executables/paths (keys/values)
+    (str) exe_path - The Windows executable path
     (boolean) is_windows - True it's a Windows OS, False it's a *nix OS
 
     """
     found = True
-    windows_paths = {}
+    exe_path = ''
     is_windows = True if platform.system() == 'Windows' else False
     # get all the drive unit letters if the OS is Windows
     windows_drives = findall(r'(\w:)\\',
@@ -297,22 +297,20 @@ def check_exec_posix_win(prog):
         # Set all commands to search the executable in all drives
         win_cmds = ['dir /B /S {0}\*{1}.exe'.format(letter, prog) for letter in
                     windows_drives]
-        # Get the first location (usually in C:) of the all founded where
-        # the executable exists
-        exe_paths = (''.join([Popen(cmd, stdout=PIPE, stderr=PIPE,
-                                    shell=True).communicate()[0] for
-                                    cmd in win_cmds])).split(os.linesep)[0]
-        # Assign the path to the executable or report not found if empty
-        if exe_paths:
-            windows_paths[prog] = exe_paths
-        else:
+        # Get the first location (usually in C:) where the executable exists
+        for cmd in win_cmds:
+            exe_path = Popen(cmd, stdout=PIPE, stderr=PIPE,
+                              shell=True).communicate()[0].split(os.linesep)[0]
+            if exe_path:
+                break
+        if not exe_path:
             found = False
     else:
         try:
             Popen([prog, '--help'], stdout=PIPE, stderr=PIPE)
         except OSError:
             found = False
-    return found, windows_paths, is_windows
+    return found, exe_path, is_windows
 
 def bes_unit_size(f_size):
     """Get a size in bytes and convert it for the best unit for readability.
@@ -356,8 +354,7 @@ def get_sub(tt_id , tt_intro, sub):
     srt_content = ''
     sub_log = ''
     tt_url = 'http://www.ted.com/talks'
-    lang = sub.split('.')[1]
-    sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, lang)
+    sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, sub[-7:-4])
     ## Get JSON sub
     if FOUND:
         json_file = Popen([WGET, '-q', '-O', '-', sub_url],
@@ -368,7 +365,7 @@ def get_sub(tt_id , tt_intro, sub):
                 if line.find('captions') == -1 and line.find('status') == -1:
                     json_file.remove(line)
         else:
-            sub_log += "Subtitle '{0}' not found".format(sub)
+            sub_log += "Subtitle '{0}' not found.{1}".format(sub, os.linesep)
     else:
         json_file = urllib2.urlopen(sub_url).readlines()
     try:
@@ -376,7 +373,8 @@ def get_sub(tt_id , tt_intro, sub):
         if 'captions' in json_object:
             caption_idx = 1
             if not json_object['captions']:
-                sub_log += "Subtitle '{0}' not completed".format(sub)
+                sub_log += ("Subtitle '{0}' not available.{1}".
+                            format(sub, os.linesep))
             for caption in json_object['captions'] :
                 start = tt_intro + caption['startTime']
                 end = start + caption['duration']
@@ -386,11 +384,15 @@ def get_sub(tt_id , tt_intro, sub):
                 srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
                 caption_idx += 1
         elif 'status' in json_object:
-            sub_log += os.linesep.join(["TED error message ({0}):".format(sub),
-                                        '', json_object['status']['message'],
-                                        os.linesep])
+            sub_log += ("This is an error message returned by TED:{0}{0} · {1}"
+                        "{0}{0}Probably because the subtitle '{2}' is not "
+                        "available.{0}{0}"
+                        "".format(os.linesep, json_object['status']['message'],
+                                  sub))
+
     except ValueError:
-        sub_log += "Subtitle '{0}' it's a malformed json file".format(sub)
+        sub_log += ("Subtitle '{0}' it's a malformed json file.{1}".
+                    format(sub, os.linesep))
     return srt_content, sub_log
 
 def check_subs(ttalk, v_name):
@@ -418,7 +420,7 @@ def check_subs(ttalk, v_name):
         if subtitle:
             with open(sub, 'w') as srt_file:
                 srt_file.write(subtitle)
-            s_log += "\n{0} downloaded".format(sub)
+            s_log += "{0}{1} downloaded.{0}".format(os.linesep, sub)
     return s_log
 
 def get_video(ttk, vid_url, vid_name):
@@ -519,8 +521,8 @@ def main():
 
 
 if __name__ == "__main__":
-    FOUND, WIN_EXECS, WIN_OS = check_exec_posix_win('wget')
+    FOUND, WIN_EXE, WIN_OS = check_exec_posix_win('wget')
     if FOUND:
-        WGET = WIN_EXECS['wget'] if WIN_OS else 'wget'
+        WGET = WIN_EXE if WIN_OS else 'wget'
     main()
 
