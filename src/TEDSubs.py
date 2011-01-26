@@ -49,8 +49,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "01/12/2010"
-__version__ = "1.3"
+__date__ = "26/01/2011"
+__version__ = "1.4"
 
 try:
     import sys
@@ -92,41 +92,20 @@ def options():
 
     return parser
 
-def check_exec_posix_win(prog):
-    """Check if the program is installed.
+def check_exec_posix(prog):
+    """Check if the program is installed in a *NIX platform.
 
-    Returns three values:
+    Returns one value:
     
     (boolean) found - True if the program is installed 
-    (str) exe_path - The Windows executable path
-    (boolean) is_windows - True it's a Windows OS, False it's a *nix OS
 
     """
     found = True
-    exe_path = ''
-    is_windows = True if platform.system() == 'Windows' else False
-    # get all the drive unit letters if the OS is Windows
-    windows_drives = findall(r'(\w:)\\',
-                             Popen('fsutil fsinfo drives', stdout=PIPE).
-                             communicate()[0]) if is_windows else None
-    if is_windows:
-        # Set all commands to search the executable in all drives
-        win_cmds = ['dir /B /S {0}\*{1}.exe'.format(letter, prog) for letter in
-                    windows_drives]
-        # Get the first location (usually in C:) where the executable exists
-        for cmd in win_cmds:
-            exe_path = Popen(cmd, stdout=PIPE, stderr=PIPE,
-                              shell=True).communicate()[0].split(os.linesep)[0]
-            if exe_path:
-                break
-        if not exe_path:
-            found = False
-    else:
-        try:
-            Popen([prog, '--help'], stdout=PIPE, stderr=PIPE)
-        except OSError:
-            found = False
-    return found, exe_path, is_windows
+    try:
+        Popen([prog, '--help'], stdout=PIPE, stderr=PIPE)
+    except OSError:
+        found = False
+    return found
 
 def get_sub(tt_id , tt_intro, sub):
     """Get TED Subtitle in JSON format & convert it to SRT Subtitle
@@ -144,7 +123,7 @@ def get_sub(tt_id , tt_intro, sub):
     sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, sub[-7:-4])
     ## Get JSON sub
     if FOUND:
-        json_file = Popen([WGET, '-q', '-O', '-', sub_url],
+        json_file = Popen(['wget', '-q', '-O', '-', sub_url],
                           stdout=PIPE).stdout.readlines()
 
         if json_file:
@@ -171,7 +150,7 @@ def get_sub(tt_id , tt_intro, sub):
                 srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
                 caption_idx += 1
         elif 'status' in json_object:
-            print("This is an error message returned by TED:{0}{0} · {1}{0}{0}"
+            print("This is an error message returned by TED:{0}{0} - {1}{0}{0}"
                   "Probably because the subtitle '{2}' is not available.{0}"
                   "".format(os.linesep, json_object['status']['message'], sub))
     except ValueError:
@@ -201,7 +180,7 @@ def get_video(vid_name, vid_url):
     Obtiene el video de la TED Talk"""
     print("Donwloading video...")
     if FOUND:
-        Popen([WGET, '-q', '-O', vid_name, vid_url], stdout=PIPE).stdout.read()
+        Popen(['wget', '-q', '-O', vid_name, vid_url], stdout=PIPE).stdout.read()
     else:
         urllib.urlretrieve(vid_url, vid_name)
     print("Video {0} downloaded.".format(vid_name))
@@ -219,7 +198,7 @@ def main():
         tedtalk_webpage = args[0]
         ## Reads the talk web page, to search the talk's values
         if FOUND:
-            ttalk_webpage = Popen([WGET, '-q', '-O', '-', tedtalk_webpage],
+            ttalk_webpage = Popen(['wget', '-q', '-O', '-', tedtalk_webpage],
                                   stdout=PIPE).stdout.read()
         else:
             try:
@@ -278,8 +257,8 @@ def main():
 
 
 if __name__ == "__main__":
-    FOUND, WIN_EXE, WIN_OS = check_exec_posix_win('wget')
-    if FOUND:
-        WGET = WIN_EXE if WIN_OS else 'wget'
+    WIN_OS = True if platform.system() == 'Windows' else False
+    if not WIN_OS:
+        FOUND = check_exec_posix('wget')
     main()
 

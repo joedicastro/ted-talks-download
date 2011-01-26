@@ -457,7 +457,6 @@ def main():
             last = pickle.load(pkl_file)
     except (EOFError, IOError, pickle.PickleError):
         last = time.localtime(time.time() - 86400)
-
     video_dates = []
 
     ## The TED Talks HD RSS feed
