@@ -49,8 +49,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "30/12/2010"
-__version__ = "1.4"
+__date__ = "26/01/2011"
+__version__ = "1.5"
 
 try:
     import os
@@ -276,41 +276,20 @@ class Logger():
             log_file.write(self.__log)
 
 
-def check_exec_posix_win(prog):
-    """Check if the program is installed.
+def check_exec_posix(prog):
+    """Check if the program is installed in a *NIX platform.
 
-    Returns three values:
+    Returns one value:
     
     (boolean) found - True if the program is installed 
-    (str) exe_path - The Windows executable path
-    (boolean) is_windows - True it's a Windows OS, False it's a *nix OS
 
     """
     found = True
-    exe_path = ''
-    is_windows = True if platform.system() == 'Windows' else False
-    # get all the drive unit letters if the OS is Windows
-    windows_drives = findall(r'(\w:)\\',
-                             Popen('fsutil fsinfo drives', stdout=PIPE).
-                             communicate()[0]) if is_windows else None
-    if is_windows:
-        # Set all commands to search the executable in all drives
-        win_cmds = ['dir /B /S {0}\*{1}.exe'.format(letter, prog) for letter in
-                    windows_drives]
-        # Get the first location (usually in C:) where the executable exists
-        for cmd in win_cmds:
-            exe_path = Popen(cmd, stdout=PIPE, stderr=PIPE,
-                              shell=True).communicate()[0].split(os.linesep)[0]
-            if exe_path:
-                break
-        if not exe_path:
-            found = False
-    else:
-        try:
-            Popen([prog, '--help'], stdout=PIPE, stderr=PIPE)
-        except OSError:
-            found = False
-    return found, exe_path, is_windows
+    try:
+        Popen([prog, '--help'], stdout=PIPE, stderr=PIPE)
+    except OSError:
+        found = False
+    return found
 
 def best_unit_size(bytes_size):
     """Get a size in bytes & convert it to the best IEC prefix for readability.
@@ -358,7 +337,7 @@ def get_sub(tt_id , tt_intro, sub):
     sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, sub[-7:-4])
     ## Get JSON sub
     if FOUND:
-        json_file = Popen([WGET, '-q', '-O', '-', sub_url],
+        json_file = Popen(['wget', '-q', '-O', '-', sub_url],
                           stdout=PIPE).stdout.readlines()
 
         if json_file:
@@ -385,9 +364,9 @@ def get_sub(tt_id , tt_intro, sub):
                 srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
                 caption_idx += 1
         elif 'status' in json_object:
-            sub_log += ("This is an error message returned by TED:{0}{0} · {1}"
+            sub_log += ("This is an error message returned by TED:{0}{0} - {1}"
                         "{0}{0}Probably because the subtitle '{2}' is not "
-                        "available.{0}{0}"
+                        "available.{0}{0}{0}"
                         "".format(os.linesep, json_object['status']['message'],
                                   sub))
 
@@ -410,7 +389,7 @@ def check_subs(ttalk, v_name):
     for sub in subs:
         ## Reads the talk web page, to search the talk's intro duration
         if FOUND:
-            tt_webpage = Popen([WGET, '-q', '-O', '-',
+            tt_webpage = Popen(['wget', '-q', '-O', '-',
                                 ttalk.feedburner_origlink],
                                 stdout=PIPE).stdout.read()
         else:
@@ -428,7 +407,7 @@ def get_video(ttk, vid_url, vid_name):
     """Gets the TED Talk video
     Obtiene el video de la TED Talk"""
     if FOUND:
-        Popen([WGET, '-q', '-O', vid_name, vid_url], stdout=PIPE).stdout.read()
+        Popen(['wget', '-q', '-O', vid_name, vid_url], stdout=PIPE).stdout.read()
     else:
         urllib.urlretrieve(vid_url, vid_name)
     v_log = '{0} ({1})\n'.format(ttk.subtitle, ttk.itunes_duration)
@@ -478,6 +457,7 @@ def main():
             last = pickle.load(pkl_file)
     except (EOFError, IOError, pickle.PickleError):
         last = time.localtime(time.time() - 86400)
+
     video_dates = []
 
     ## The TED Talks HD RSS feed
@@ -498,7 +478,7 @@ def main():
         tt_vid_url = ttalk_entrie.enclosures[0].href
         tt_vid_name = tt_vid_url.split('/')[-1]
         ## If the video is new, download it!
-        if ttalk_entrie.updated_parsed > last:
+        if ttalk_entrie.updated_parsed > last and tt_vid_name not in videos:
             vids_log += get_video(ttalk_entrie, tt_vid_url, tt_vid_name)
             videos.append(tt_vid_name)
             video_dates.append(ttalk_entrie.updated_parsed)
@@ -522,8 +502,8 @@ def main():
 
 
 if __name__ == "__main__":
-    FOUND, WIN_EXE, WIN_OS = check_exec_posix_win('wget')
-    if FOUND:
-        WGET = WIN_EXE if WIN_OS else 'wget'
+    WIN_OS = True if platform.system() == 'Windows' else False
+    if not WIN_OS:
+        FOUND = check_exec_posix('wget')
     main()
 
