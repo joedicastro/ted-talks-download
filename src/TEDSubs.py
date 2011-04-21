@@ -212,9 +212,6 @@ def main():
                                          ttalk_webpage).group(1))
                 ttalk_id = int(search("talkID = (\d+);",
                                       ttalk_webpage).group(1))
-                ttalk_vid = (search('hs:"(?:.+)?talks/(?:dynamic/)?([\w|\.]*)'
-                                    '(?:-.+)?.\w+"', ttalk_webpage).group(1) +
-                                    '_480.mp4')
             except AttributeError:
                 if search("Best of the Web", ttalk_webpage):
                     print("This is a video from a external website.{0}Video and"
