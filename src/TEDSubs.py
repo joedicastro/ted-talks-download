@@ -49,8 +49,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "26/01/2011"
-__version__ = "1.4"
+__date__ = "21/04/2011"
+__version__ = "1.5"
 
 try:
     import sys
