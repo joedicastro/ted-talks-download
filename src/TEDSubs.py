@@ -49,8 +49,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "21/04/2011"
-__version__ = "1.5"
+__date__ = "27/07/2011"
+__version__ = "1.6"
 
 try:
     import sys
@@ -223,33 +223,24 @@ def main():
                           "{0}{2}{0}Thanks for helping to fix errors.{0}"
                           "".format(os.linesep * 2, tedtalk_webpage, issue_url))
                 sys.exit(1)
-            ttalk_dwn = ''
+            ttalk_url = ''
             try:
-                ttalk_dwn = search('href="(.*)">Watch high-res video',
+                ttalk_url = search('href="(.*)">High-res video',
                                    ttalk_webpage).group(1)
             except AttributeError:
                 try:
-                    ttalk_dwn = search('href="(.*)">Download video to desktop',
+                    ttalk_url = search('href="(.*)">Download to desktop',
                                        ttalk_webpage).group(1)
                 except AttributeError:
                     print('This video is not available for download.')
-            if ttalk_dwn:
-                if FOUND:
-                    ttalk_lnk = Popen(['wget', '--spider',
-                                       'http://ted.com/{0}'.format(ttalk_dwn)],
-                                       stderr=PIPE).stderr.read()
-                    ttalk_url = search('  (http://.*/.*\.mp4)\\n',
-                                       ttalk_lnk).group(1)
-                else:
-                    ttalk_url = urllib2.urlopen('http://ted.com' +
-                                                ttalk_dwn).geturl()
+            if ttalk_url:
                 ttalk_vid = search('http://.+\/(.*\.mp4)', ttalk_url).group(1)
         else:
             print("Are you sure this is the right URL?")
             sys.exit(1)
         ## Get subs (and video)
         check_subs(ttalk_id, ttalk_intro, ttalk_vid)
-        if not opts.no_video and ttalk_dwn:
+        if not opts.no_video and ttalk_url:
             get_video(ttalk_vid, ttalk_url)
 
 
