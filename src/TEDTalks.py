@@ -49,8 +49,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "26/01/2011"
-__version__ = "1.5"
+__date__ = "19/10/2011"
+__version__ = "1.6"
 
 try:
     import os
@@ -65,8 +65,10 @@ try:
     import socket
     import pickle
     import platform
+    import getpass
     from re import search, findall
     from subprocess import Popen, PIPE
+    from email.mime.base import MIMEBase
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     from email.utils import COMMASPACE, formatdate
@@ -213,7 +215,7 @@ class Logger():
         mailbox is assumed instead. Useful for loggin scripts
 
         """
-        local_email = '@'.join([os.getenv('LOGNAME'), socket.gethostname()])
+        local_email = '@'.join([getpass.getuser(), socket.gethostname()])
         if not send_from:
             send_from = local_email
         if not dest_to:
