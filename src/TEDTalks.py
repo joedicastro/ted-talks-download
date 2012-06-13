@@ -5,17 +5,17 @@
     TEDTalks.py: Automate download new HD TED Talks by its RSS Feed
 """
 
-#===============================================================================
-# This Script uses the TED Talks HD RSS Feed to download the talks' videos and 
+#==============================================================================
+# This Script uses the TED Talks HD RSS Feed to download the talks' videos and
 # subtitles.
 #
 # Este script emplea la fuente RSS de las TED Talks en HD, para descargar los
 # videos y los subtitulos para las charlas
-#===============================================================================
+#==============================================================================
 
-#===============================================================================
+#==============================================================================
 #       Copyright 2010 joe di castro <joe@joedicastro.com>
-#       
+#
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
@@ -30,22 +30,22 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #
-#    Este programa es software libre: usted puede redistribuirlo y/o modificarlo
-#    bajo los términos de la Licencia Publica General GNU publicada 
-#    por la Fundación para el Software Libre, ya sea la versión 3 
-#    de la Licencia, o (a su elección) cualquier versión posterior.
+#    Este programa es software libre: usted puede redistribuirlo y/o
+#    modificarlo bajo los términos de la Licencia Publica General GNU publicada
+#    por la Fundación para el Software Libre, ya sea la versión 3 de la
+#    Licencia, o (a su elección) cualquier versión posterior.
 #
-#    Este programa se distribuye con la esperanza de que sea útil, pero 
-#    SIN GARANTIA ALGUNA; ni siquiera la garantía implícita 
-#    MERCANTIL o de APTITUD PARA UN PROPOSITO DETERMINADO. 
-#    Consulte los detalles de la Licencia Publica General GNU para obtener 
-#    una información mas detallada. 
+#    Este programa se distribuye con la esperanza de que sea útil, pero
+#    SIN GARANTIA ALGUNA; ni siquiera la garantía implícita
+#    MERCANTIL o de APTITUD PARA UN PROPOSITO DETERMINADO.
+#    Consulte los detalles de la Licencia Publica General GNU para obtener
+#    una información mas detallada.
 #
-#    Deberla haber recibido una copia de la Licencia Publica General GNU 
-#    junto a este programa. 
+#    Deberla haber recibido una copia de la Licencia Publica General GNU
+#    junto a este programa.
 #    En caso contrario, consulte <http://www.gnu.org/licenses/>.
 #
-#===============================================================================
+#==============================================================================
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
@@ -66,18 +66,18 @@ try:
     import pickle
     import platform
     import getpass
-    from re import search, findall
+    from re import search
     from subprocess import Popen, PIPE
-    from email.mime.base import MIMEBase
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     from email.utils import COMMASPACE, formatdate
 except ImportError:
-    # Checks the installation of the necessary python modules 
+    # Checks the installation of the necessary python modules
     # Comprueba si todos los módulos necesarios están instalados
     print((os.linesep * 2).join(["An error found importing one module:",
     str(sys.exc_info()[1]), "You need to install it", "Stopping..."]))
     sys.exit(-2)
+
 
 class Logger():
     """
@@ -114,8 +114,8 @@ class Logger():
         make the looks of self.block() and self.list()
 
         """
-        ending = {'=':'', '_':os.linesep}[decor]
-        end = {'=': '=' * 80, '_':''}[decor]
+        ending = {'=': '', '_': os.linesep}[decor]
+        end = {'=': '=' * 80, '_': ''}[decor]
         begin = ' '.join([tit.upper(), (80 - (len(tit) + 1)) * decor]) + ending
         cont = [cont] if isinstance(cont, str) else cont
         sep = os.linesep
@@ -221,7 +221,7 @@ class Logger():
         if not dest_to:
             dest_to = [local_email]
 
-        dest_to_addrs = COMMASPACE.join(dest_to) # receivers mails
+        dest_to_addrs = COMMASPACE.join(dest_to)  # receivers mails
         message = MIMEMultipart()
         message['Subject'] = '{0} - {1}'.format(subject,
                                                 time.strftime('%A %x, %X'))
@@ -282,8 +282,8 @@ def check_exec_posix(prog):
     """Check if the program is installed in a *NIX platform.
 
     Returns one value:
-    
-    (boolean) found - True if the program is installed 
+
+    (boolean) found - True if the program is installed
 
     """
     found = True
@@ -292,6 +292,7 @@ def check_exec_posix(prog):
     except OSError:
         found = False
     return found
+
 
 def best_unit_size(bytes_size):
     """Get a size in bytes & convert it to the best IEC prefix for readability.
@@ -303,13 +304,14 @@ def best_unit_size(bytes_size):
     'b' -- (int / long) The original size in bytes
 
     """
-    for exp in range(0, 90 , 10):
+    for exp in range(0, 90, 10):
         bu_size = abs(bytes_size) / pow(2.0, exp)
         if int(bu_size) < 2 ** 10:
-            unit = {0:'bytes', 10:'KiB', 20:'MiB', 30:'GiB', 40:'TiB', 50:'PiB',
-                    60:'EiB', 70:'ZiB', 80:'YiB'}[exp]
+            unit = {0: 'bytes', 10: 'KiB', 20: 'MiB', 30: 'GiB', 40: 'TiB',
+                    50: 'PiB', 60: 'EiB', 70: 'ZiB', 80: 'YiB'}[exp]
             break
-    return {'s':bu_size, 'u':unit, 'b':bytes_size}
+    return {'s': bu_size, 'u': unit, 'b': bytes_size}
+
 
 def get_size(the_path):
     """Get size of a directory tree or a file in bytes."""
@@ -322,7 +324,8 @@ def get_size(the_path):
     path_size += os.path.getsize(the_path)
     return path_size
 
-def get_sub(tt_id , tt_intro, sub):
+
+def get_sub(tt_id, tt_intro, sub):
     """Get TED Subtitle in JSON format & convert it to SRT Subtitle
     Obtiene el subtitulo de TED en formato JSON y lo convierte al formato SRT"""
 
@@ -337,7 +340,7 @@ def get_sub(tt_id , tt_intro, sub):
     sub_log = ''
     tt_url = 'http://www.ted.com/talks'
     sub_url = '{0}/subtitles/id/{1}/lang/{2}'.format(tt_url, tt_id, sub[-7:-4])
-    ## Get JSON sub
+    # Get JSON sub
     if FOUND:
         json_file = Popen(['wget', '-q', '-O', '-', sub_url],
                           stdout=PIPE).stdout.readlines()
@@ -357,7 +360,7 @@ def get_sub(tt_id , tt_intro, sub):
             if not json_object['captions']:
                 sub_log += ("Subtitle '{0}' not available.{1}".
                             format(sub, os.linesep))
-            for caption in json_object['captions'] :
+            for caption in json_object['captions']:
                 start = tt_intro + caption['startTime']
                 end = start + caption['duration']
                 idx_line = '{0}'.format(caption_idx)
@@ -377,19 +380,20 @@ def get_sub(tt_id , tt_intro, sub):
                     format(sub, os.linesep))
     return srt_content, sub_log
 
+
 def check_subs(ttalk, v_name):
-    """Check if the subtitles for the talk are downloaded, if not try to get 
+    """Check if the subtitles for the talk are downloaded, if not try to get
     them. Checks it for english and spanish languages
-    Comprueba si los subtitulos para la charla estan descargados, si no, intenta
-    obtenerlos. Lo comprueba para los idiomas español e ingles"""
-    ## Get the names for the subtitles (for english and spanish languages) only 
+    Comprueba si los subtitulos para la charla estan descargados, si no,
+    intenta obtenerlos. Lo comprueba para los idiomas español e ingles"""
+    # Get the names for the subtitles (for english and spanish languages) only
     # if they not are already downloaded
     subs = (s_name for s_name in
             ("{0}.{1}.srt".format(v_name[:-4], lang) for lang in ('eng', 'spa'))
             if s_name not in glob.glob('*.srt'))
     s_log = ''
     for sub in subs:
-        ## Reads the talk web page, to search the talk's intro duration
+        # Reads the talk web page, to search the talk's intro duration
         if FOUND:
             tt_webpage = Popen(['wget', '-q', '-O', '-',
                                 ttalk.feedburner_origlink],
@@ -405,11 +409,13 @@ def check_subs(ttalk, v_name):
             s_log += "{0}{1} downloaded.{0}".format(os.linesep, sub)
     return s_log
 
+
 def get_video(ttk, vid_url, vid_name):
     """Gets the TED Talk video
     Obtiene el video de la TED Talk"""
     if FOUND:
-        Popen(['wget', '-q', '-O', vid_name, vid_url], stdout=PIPE).stdout.read()
+        Popen(['wget', '-q', '-O', vid_name, vid_url],
+              stdout=PIPE).stdout.read()
     else:
         urllib.urlretrieve(vid_url, vid_name)
     v_log = '{0} ({1})\n'.format(ttk.subtitle, ttk.itunes_duration)
@@ -421,21 +427,22 @@ def get_video(ttk, vid_url, vid_name):
     v_log += '{0:.2f} {1}\n\n'.format(vid_size['s'], vid_size['u'])
     return v_log
 
+
 def main():
     """main section"""
 
-#===============================================================================
+#==============================================================================
 # SCRIPT PARAMETERS
-#===============================================================================
+#==============================================================================
 
-    ## The directory to store the videos and subs. 
-    # For Windows change the character '\' for the character '/', I know is 
+    # The directory to store the videos and subs.
+    # For Windows change the character '\' for the character '/', I know is
     # akward but is because how escape strings python
     ttalk_vid_dir = '/your/path/to/TED/Talks/Videos'
 
-#===============================================================================
+#==============================================================================
 # END PARAMETERS
-#===============================================================================
+#==============================================================================
 
     # initalize the log
     log = Logger()
@@ -450,10 +457,10 @@ def main():
 
     os.chdir(os.path.normpath(ttalk_vid_dir))
 
-    ## Get a list of the current TED Talks downloaded in the dir
+    # Get a list of the current TED Talks downloaded in the dir
     videos = glob.glob('*.mp4')
 
-    ## Get the last download Talk video date
+    # Get the last download Talk video date
     try:
         with open('.data.pkl', 'rb') as pkl_file:
             last = pickle.load(pkl_file)
@@ -461,42 +468,41 @@ def main():
         last = time.localtime(time.time() - 86400)
     video_dates = []
 
-    ## The TED Talks HD RSS feed
+    # The TED Talks HD RSS feed
     ttalk_feed_url = 'http://feeds.feedburner.com/tedtalksHD'
     ttalk_feed = feedparser.parse(ttalk_feed_url)
 
-    ## If the feed is erroneous or occurs a http or network error, log and exit!
+    # If the feed is erroneous or occurs a http or network error, log and exit!
     if ttalk_feed.bozo:
         log.list('An error occurred', str(ttalk_feed.bozo_exception))
         if not WIN_OS:
             log.send('Download TED Talks')
         sys.exit(1)
 
-    ## If correct, process the feed entries
+    # If correct, process the feed entries
     vids_log, subs_log = '', ''
     for ttalk_entrie in ttalk_feed.entries:
-        ## Get The video url and name
+        # Get The video url and name
         tt_vid_url = ttalk_entrie.enclosures[0].href
         tt_vid_name = tt_vid_url.split('/')[-1]
-        ## If the video is new, download it!
+        # If the video is new, download it!
         if ttalk_entrie.updated_parsed > last and tt_vid_name not in videos:
             vids_log += get_video(ttalk_entrie, tt_vid_url, tt_vid_name)
             videos.append(tt_vid_name)
             video_dates.append(ttalk_entrie.updated_parsed)
-        ## If video is already downloaded, check if subs exists, if not, get it!
+        # If video is already downloaded, check if subs exists, if not, get it!
         if tt_vid_name in videos:
             subs_log += check_subs(ttalk_entrie, tt_vid_name)
     log.list('Talks downloaded', vids_log)
     log.list('Subs downloaded', [subs_log])
 
-    ## Set the last download video date
+    # Set the last download video date
     if video_dates:
         last = max(video_dates)
         with open('.data.pkl', 'wb') as output:
             pickle.dump(last, output)
 
     log.time('End time')
-    ## If logs any activity, sends the information mail 
     if not WIN_OS:
         log.send('Download TED Talks')
     log.write(False)
@@ -507,4 +513,3 @@ if __name__ == "__main__":
     if not WIN_OS:
         FOUND = check_exec_posix('wget')
     main()
-

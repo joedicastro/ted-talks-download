@@ -5,17 +5,17 @@
     TEDSubs.py: Downloads a TED Talk' subtitles and videos by it's url
 """
 
-#===============================================================================
-# This Script uses a TED Talk URL to download the talk's video and 
+#==============================================================================
+# This Script uses a TED Talk URL to download the talk's video and
 # subtitles.
 #
 # Este script emplea la url de una TED Talk y descarga el video y los
 # subtitulos de la misma
-#===============================================================================
+#==============================================================================
 
-#===============================================================================
+#==============================================================================
 #    Copyright 2010 joe di castro <joe@joedicastro.com>
-#       
+#
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
@@ -30,22 +30,22 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #
-#    Este programa es software libre: usted puede redistribuirlo y/o modificarlo
-#    bajo los términos de la Licencia Publica General GNU publicada 
-#    por la Fundación para el Software Libre, ya sea la versión 3 
-#    de la Licencia, o (a su elección) cualquier versión posterior.
+#    Este programa es software libre: usted puede redistribuirlo y/o
+#    modificarlo bajo los términos de la Licencia Publica General GNU publicada
+#    por la Fundación para el Software Libre, ya sea la versión 3 de la
+#    Licencia, o (a su elección) cualquier versión posterior.
 #
-#    Este programa se distribuye con la esperanza de que sea útil, pero 
-#    SIN GARANTIA ALGUNA; ni siquiera la garantía implícita 
-#    MERCANTIL o de APTITUD PARA UN PROPOSITO DETERMINADO. 
-#    Consulte los detalles de la Licencia Publica General GNU para obtener 
-#    una información mas detallada. 
+#    Este programa se distribuye con la esperanza de que sea útil, pero
+#    SIN GARANTIA ALGUNA; ni siquiera la garantía implícita
+#    MERCANTIL o de APTITUD PARA UN PROPOSITO DETERMINADO.
+#    Consulte los detalles de la Licencia Publica General GNU para obtener
+#    una información mas detallada.
 #
-#    Deberla haber recibido una copia de la Licencia Publica General GNU 
-#    junto a este programa. 
+#    Deberla haber recibido una copia de la Licencia Publica General GNU
+#    junto a este programa.
 #    En caso contrario, consulte <http://www.gnu.org/licenses/>.
 #
-#===============================================================================
+#==============================================================================
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
@@ -60,27 +60,28 @@ try:
     import platform
     import urllib
     import urllib2
-    from re import search, findall
+    from re import search
     from subprocess import Popen, PIPE
 except ImportError:
-    # Checks the installation of the necessary python modules 
+    # Checks the installation of the necessary python modules
     # Comprueba si todos los módulos necesarios están instalados
     print((os.linesep * 2).join(["An error found importing one module:",
     str(sys.exc_info()[1]), "You need to install it", "Stopping..."]))
     sys.exit(-2)
 
+
 def options():
     """Defines the command line arguments and options for the script
     Define los argumentos y las opciones de la linea de comandos del script"""
     usage = """usage: %prog [Options] TEDTalkURL
-    
+
     Where TEDTalkURL is the url of a TED Talk webpage
 
     For example:
 
     %prog -s  http://www.ted.com/talks/lang/eng/jamie_oliver.html
 
-    Downloads only the subs for the Jamie Oliver's TED Talk, if wants the video 
+    Downloads only the subs for the Jamie Oliver's TED Talk, if wants the video
     too only needs to remove the "-s" option"""
     desc = "Downloads the subtitles and the video (optional) for a TED Talk."
     parser = optparse.OptionParser(usage=usage, version="%prog " + __version__,
@@ -92,12 +93,13 @@ def options():
 
     return parser
 
+
 def check_exec_posix(prog):
     """Check if the program is installed in a *NIX platform.
 
     Returns one value:
-    
-    (boolean) found - True if the program is installed 
+
+    (boolean) found - True if the program is installed
 
     """
     found = True
@@ -107,7 +109,8 @@ def check_exec_posix(prog):
         found = False
     return found
 
-def get_sub(tt_id , tt_intro, sub):
+
+def get_sub(tt_id, tt_intro, sub):
     """Get TED Subtitle in JSON format & convert it to SRT Subtitle
     Obtiene el subtitulo de TED en formato JSON y lo convierte al formato SRT"""
 
@@ -141,7 +144,7 @@ def get_sub(tt_id , tt_intro, sub):
             caption_idx = 1
             if not json_object['captions']:
                 print("Subtitle '{0}' not available.".format(sub))
-            for caption in json_object['captions'] :
+            for caption in json_object['captions']:
                 start = tt_intro + caption['startTime']
                 end = start + caption['duration']
                 idx_line = '{0}'.format(caption_idx)
@@ -161,9 +164,9 @@ def get_sub(tt_id , tt_intro, sub):
 def check_subs(tt_id, tt_intro, tt_video):
     """Check if the subtitles for the talk exists and try to get them. Checks it
     for english and spanish languages.
-    Comprueba si los subtitulos para la charla existen e intenta obtenerlos. Lo 
+    Comprueba si los subtitulos para la charla existen e intenta obtenerlos. Lo
     comprueba para los idiomas español e ingles"""
-    ## Get the names for the subtitles (for english and spanish languages) only 
+    ## Get the names for the subtitles (for english and spanish languages) only
     # if they not are already downloaded
     subs = ("{0}.{1}.srt".format(tt_video[:-4], lang) for lang in
             ('eng', 'spa'))
@@ -175,6 +178,7 @@ def check_subs(tt_id, tt_intro, tt_video):
             print("Subtitle '{0}' downloaded.".format(sub))
     return
 
+
 def get_video(vid_name, vid_url):
     """Gets the TED Talk video
     Obtiene el video de la TED Talk"""
@@ -185,6 +189,7 @@ def get_video(vid_name, vid_url):
         urllib.urlretrieve(vid_url, vid_name)
     print("Video {0} downloaded.".format(vid_name))
     return
+
 
 def main():
     """main section"""
@@ -249,4 +254,3 @@ if __name__ == "__main__":
     if not WIN_OS:
         FOUND = check_exec_posix('wget')
     main()
-
