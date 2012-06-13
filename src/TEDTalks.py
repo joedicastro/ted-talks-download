@@ -503,6 +503,7 @@ def main():
             pickle.dump(last, output)
 
     log.time('End time')
+    # If logs any activity, sends the information mail
     if not WIN_OS:
         log.send('Download TED Talks')
     log.write(False)
