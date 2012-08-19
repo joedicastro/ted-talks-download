@@ -75,7 +75,7 @@ except ImportError:
     # Checks the installation of the necessary python modules
     # Comprueba si todos los módulos necesarios están instalados
     print((os.linesep * 2).join(["An error found importing one module:",
-    str(sys.exc_info()[1]), "You need to install it", "Stopping..."]))
+          str(sys.exc_info()[1]), "You need to install it", "Stopping..."]))
     sys.exit(-2)
 
 
@@ -180,7 +180,7 @@ class Logger():
         """A self.block() formated header for the log info.
 
         (str) url -- The url of the script
-        (str) msg -- Message to show into the header. To Provide any useful info
+        (str) msg -- Message to show into the header to provide any useful info
 
         It looks like this:
 
@@ -327,13 +327,14 @@ def get_size(the_path):
 
 def get_sub(tt_id, tt_intro, sub):
     """Get TED Subtitle in JSON format & convert it to SRT Subtitle
-    Obtiene el subtitulo de TED en formato JSON y lo convierte al formato SRT"""
+    Obtiene el subtitulo de TED en formato JSON y lo convierte a formato SRT"""
 
     def srt_time(tst):
         """Format Time from TED Subtitles format to SRT time Format
         Convierte el formato de tiempo del subtitulo TED al formato de SRT"""
         secs, mins, hours = ((tst / 1000) % 60), (tst / 60000), (tst / 3600000)
-        right_srt_time = "{0:02d}:{1:02d}:{2:02d},000".format(hours, mins, secs)
+        right_srt_time = "{0:02d}:{1:02d}:{2:02d},000".format(hours, mins,
+                                                              secs)
         return right_srt_time
 
     srt_content = ''
@@ -353,31 +354,36 @@ def get_sub(tt_id, tt_intro, sub):
             sub_log += "Subtitle '{0}' not found.{1}".format(sub, os.linesep)
     else:
         json_file = urllib2.urlopen(sub_url).readlines()
-    try:
-        json_object = json.loads(json_file[0])
-        if 'captions' in json_object:
-            caption_idx = 1
-            if not json_object['captions']:
-                sub_log += ("Subtitle '{0}' not available.{1}".
-                            format(sub, os.linesep))
-            for caption in json_object['captions']:
-                start = tt_intro + caption['startTime']
-                end = start + caption['duration']
-                idx_line = '{0}'.format(caption_idx)
-                time_line = '{0} --> {1}'.format(srt_time(start), srt_time(end))
-                text_line = '{0}'.format(caption['content'].encode("utf-8"))
-                srt_content += '\n'.join([idx_line, time_line, text_line, '\n'])
-                caption_idx += 1
-        elif 'status' in json_object:
-            sub_log += ("This is an error message returned by TED:{0}{0} - {1}"
-                        "{0}{0}Probably because the subtitle '{2}' is not "
-                        "available.{0}{0}{0}"
-                        "".format(os.linesep, json_object['status']['message'],
-                                  sub))
+    if json_file:
+        try:
+            json_object = json.loads(json_file[0])
+            if 'captions' in json_object:
+                caption_idx = 1
+                if not json_object['captions']:
+                    sub_log += ("Subtitle '{0}' not available.{1}".
+                                format(sub, os.linesep))
+                for caption in json_object['captions']:
+                    start = tt_intro + caption['startTime']
+                    end = start + caption['duration']
+                    idx_line = '{0}'.format(caption_idx)
+                    time_line = '{0} --> {1}'.format(srt_time(start),
+                                srt_time(end))
+                    text_line = '{0}'.format(caption['content'].
+                                             encode("utf-8"))
+                    srt_content += '\n'.join([idx_line, time_line, text_line,
+                                             '\n'])
+                    caption_idx += 1
+            elif 'status' in json_object:
+                sub_log += ("This is an error message returned by TED:{0}{0} "
+                            "- {1} {0}{0}Probably because the subtitle '{2}' "
+                            "is not available.{0}{0}{0}"
+                            "".format(os.linesep,
+                                      json_object['status']['message'],
+                                      sub))
 
-    except ValueError:
-        sub_log += ("Subtitle '{0}' it's a malformed json file.{1}".
-                    format(sub, os.linesep))
+        except ValueError:
+            sub_log += ("Subtitle '{0}' it's a malformed json file.{1}".
+                        format(sub, os.linesep))
     return srt_content, sub_log
 
 
@@ -389,7 +395,8 @@ def check_subs(ttalk, v_name):
     # Get the names for the subtitles (for english and spanish languages) only
     # if they not are already downloaded
     subs = (s_name for s_name in
-            ("{0}.{1}.srt".format(v_name[:-4], lang) for lang in ('eng', 'spa'))
+            ("{0}.{1}.srt".format(v_name[:-4], lang) for lang in ('eng',
+                                                                  'spa'))
             if s_name not in glob.glob('*.srt'))
     s_log = ''
     for sub in subs:
@@ -397,10 +404,10 @@ def check_subs(ttalk, v_name):
         if FOUND:
             tt_webpage = Popen(['wget', '-q', '-O', '-',
                                 ttalk.feedburner_origlink],
-                                stdout=PIPE).stdout.read()
+                               stdout=PIPE).stdout.read()
         else:
             tt_webpage = urllib2.urlopen(ttalk.feedburner_origlink).read()
-        tt_intro = int(search("introDuration:(\d+),", tt_webpage).group(1))
+        tt_intro = int(search("introDuration=(\d+)&amp;", tt_webpage).group(1))
         subtitle, get_log = get_sub(ttalk.id.split(':')[-1], tt_intro, sub)
         s_log += get_log
         if subtitle:
@@ -418,10 +425,11 @@ def get_video(ttk, vid_url, vid_name):
               stdout=PIPE).stdout.read()
     else:
         urllib.urlretrieve(vid_url, vid_name)
-    v_log = '{0} ({1})\n'.format(ttk.subtitle, ttk.itunes_duration)
+    v_log = '{0} ({1})\n'.format(ttk.subtitle,
+                                 ttk.itunes_duration).encode("utf-8")
     v_log += '{0}\n\n'.format('=' * (len(ttk.subtitle) + 11))
-    v_log += '{0}\n\n'.format(ttk.feedburner_origlink)
-    v_log += '{0}\n\n'.format(ttk.content[0].value)
+    v_log += '{0}\n\n'.format(ttk.feedburner_origlink).encode("utf-8")
+    v_log += '{0}\n\n'.format(ttk.content[0].value).encode("utf-8")
     v_log += 'file://{0}\n'.format(os.path.join(os.getcwd(), vid_name))
     vid_size = best_unit_size(get_size(vid_name))
     v_log += '{0:.2f} {1}\n\n'.format(vid_size['s'], vid_size['u'])
@@ -487,7 +495,8 @@ def main():
         tt_vid_name = tt_vid_url.split('/')[-1]
         # If the video is new, download it!
         if ttalk_entrie.updated_parsed > last and tt_vid_name not in videos:
-            vids_log += get_video(ttalk_entrie, tt_vid_url, tt_vid_name)
+            vids_log += get_video(ttalk_entrie, tt_vid_url,
+                                  tt_vid_name).encode("utf-8")
             videos.append(tt_vid_name)
             video_dates.append(ttalk_entrie.updated_parsed)
         # If video is already downloaded, check if subs exists, if not, get it!
