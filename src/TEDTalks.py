@@ -8,9 +8,6 @@
 #==============================================================================
 # This Script uses the TED Talks HD RSS Feed to download the talks' videos and
 # subtitles.
-#
-# Este script emplea la fuente RSS de las TED Talks en HD, para descargar los
-# videos y los subtitulos para las charlas
 #==============================================================================
 
 #==============================================================================
@@ -28,29 +25,12 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#
-#    Este programa es software libre: usted puede redistribuirlo y/o
-#    modificarlo bajo los términos de la Licencia Publica General GNU publicada
-#    por la Fundación para el Software Libre, ya sea la versión 3 de la
-#    Licencia, o (a su elección) cualquier versión posterior.
-#
-#    Este programa se distribuye con la esperanza de que sea útil, pero
-#    SIN GARANTIA ALGUNA; ni siquiera la garantía implícita
-#    MERCANTIL o de APTITUD PARA UN PROPOSITO DETERMINADO.
-#    Consulte los detalles de la Licencia Publica General GNU para obtener
-#    una información mas detallada.
-#
-#    Deberla haber recibido una copia de la Licencia Publica General GNU
-#    junto a este programa.
-#    En caso contrario, consulte <http://www.gnu.org/licenses/>.
-#
 #==============================================================================
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "19/10/2011"
-__version__ = "1.6"
+__date__ = "07/11/2012"
+__version__ = "1.7"
 
 try:
     import os
@@ -66,14 +46,13 @@ try:
     import pickle
     import platform
     import getpass
-    from re import search
+    from re import compile
     from subprocess import Popen, PIPE
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     from email.utils import COMMASPACE, formatdate
 except ImportError:
     # Checks the installation of the necessary python modules
-    # Comprueba si todos los módulos necesarios están instalados
     print((os.linesep * 2).join(["An error found importing one module:",
           str(sys.exc_info()[1]), "You need to install it", "Stopping..."]))
     sys.exit(-2)
@@ -326,12 +305,10 @@ def get_size(the_path):
 
 
 def get_sub(tt_id, tt_intro, sub):
-    """Get TED Subtitle in JSON format & convert it to SRT Subtitle
-    Obtiene el subtitulo de TED en formato JSON y lo convierte a formato SRT"""
+    """Get TED Subtitle in JSON format & convert it to SRT Subtitle."""
 
     def srt_time(tst):
-        """Format Time from TED Subtitles format to SRT time Format
-        Convierte el formato de tiempo del subtitulo TED al formato de SRT"""
+        """Format Time from TED Subtitles format to SRT time Format."""
         secs, mins, hours = ((tst / 1000) % 60), (tst / 60000), (tst / 3600000)
         right_srt_time = "{0:02d}:{1:02d}:{2:02d},000".format(hours, mins,
                                                               secs)
@@ -368,8 +345,7 @@ def get_sub(tt_id, tt_intro, sub):
                     idx_line = '{0}'.format(caption_idx)
                     time_line = '{0} --> {1}'.format(srt_time(start),
                                 srt_time(end))
-                    text_line = '{0}'.format(caption['content'].
-                                             encode("utf-8"))
+                    text_line = '{0}'.format(caption['content'])
                     srt_content += '\n'.join([idx_line, time_line, text_line,
                                              '\n'])
                     caption_idx += 1
@@ -384,14 +360,12 @@ def get_sub(tt_id, tt_intro, sub):
         except ValueError:
             sub_log += ("Subtitle '{0}' it's a malformed json file.{1}".
                         format(sub, os.linesep))
-    return srt_content, sub_log
+    return srt_content.encode('utf-8'), sub_log
 
 
 def check_subs(ttalk, v_name):
     """Check if the subtitles for the talk are downloaded, if not try to get
-    them. Checks it for english and spanish languages
-    Comprueba si los subtitulos para la charla estan descargados, si no,
-    intenta obtenerlos. Lo comprueba para los idiomas español e ingles"""
+    them. Checks it for english and spanish languages."""
     # Get the names for the subtitles (for english and spanish languages) only
     # if they not are already downloaded
     subs = (s_name for s_name in
@@ -407,7 +381,8 @@ def check_subs(ttalk, v_name):
                                stdout=PIPE).stdout.read()
         else:
             tt_webpage = urllib2.urlopen(ttalk.feedburner_origlink).read()
-        tt_intro = int(search("introDuration=(\d+)&amp;", tt_webpage).group(1))
+        regex = compile('pad_seconds = ([\d|\.]+);')
+        tt_intro = int(regex.findall(tt_webpage)[0].replace('.', '')) * 10
         subtitle, get_log = get_sub(ttalk.id.split(':')[-1], tt_intro, sub)
         s_log += get_log
         if subtitle:
@@ -418,22 +393,20 @@ def check_subs(ttalk, v_name):
 
 
 def get_video(ttk, vid_url, vid_name):
-    """Gets the TED Talk video
-    Obtiene el video de la TED Talk"""
+    """Gets the TED Talk video."""
     if FOUND:
         Popen(['wget', '-q', '-O', vid_name, vid_url],
               stdout=PIPE).stdout.read()
     else:
         urllib.urlretrieve(vid_url, vid_name)
-    v_log = '{0} ({1})\n'.format(ttk.subtitle,
-                                 ttk.itunes_duration).encode("utf-8")
-    v_log += '{0}\n\n'.format('=' * (len(ttk.subtitle) + 11))
-    v_log += '{0}\n\n'.format(ttk.feedburner_origlink).encode("utf-8")
-    v_log += '{0}\n\n'.format(ttk.content[0].value).encode("utf-8")
-    v_log += 'file://{0}\n'.format(os.path.join(os.getcwd(), vid_name))
-    vid_size = best_unit_size(get_size(vid_name))
-    v_log += '{0:.2f} {1}\n\n'.format(vid_size['s'], vid_size['u'])
-    return v_log
+    v_log = u'{0} ({1})\n'.format(ttk.subtitle, ttk.itunes_duration)
+    v_log += u'{0}\n\n'.format('=' * (len(ttk.subtitle) + 11))
+    v_log += u'{0}\n\n'.format(ttk.feedburner_origlink)
+    v_log += u'{0}\n\n'.format(ttk.content[0].value)
+    v_log += u'file://{0}\n'.format(os.path.join(os.getcwd(), vid_name))
+    vid_size = best_unit_size(int(ttk.media_content[0]['filesize']))
+    v_log += u'{0:.2f} {1}\n\n'.format(vid_size['s'], vid_size['u'])
+    return v_log.encode('utf8')
 
 
 def main():
@@ -491,14 +464,13 @@ def main():
     vids_log, subs_log = '', ''
     for ttalk_entrie in ttalk_feed.entries:
         # Get The video url and name
-        tt_vid_url = ttalk_entrie.enclosures[0].href
-        tt_vid_name = tt_vid_url.split('/')[-1]
+        tt_vid_url = ttalk_entrie.media_content[0]['url']
+        tt_vid_name = tt_vid_url.split('/')[-1].split('?')[0]
         # If the video is new, download it!
-        if ttalk_entrie.updated_parsed > last and tt_vid_name not in videos:
-            vids_log += get_video(ttalk_entrie, tt_vid_url,
-                                  tt_vid_name).encode("utf-8")
+        if ttalk_entrie.published_parsed > last and tt_vid_name not in videos:
+            vids_log += get_video(ttalk_entrie, tt_vid_url, tt_vid_name)
             videos.append(tt_vid_name)
-            video_dates.append(ttalk_entrie.updated_parsed)
+            video_dates.append(ttalk_entrie.published_parsed)
         # If video is already downloaded, check if subs exists, if not, get it!
         if tt_vid_name in videos:
             subs_log += check_subs(ttalk_entrie, tt_vid_name)
