@@ -29,28 +29,28 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "07/11/2012"
-__version__ = "1.7"
+__date__ = "08/11/2012"
+__version__ = "1.8"
 
 try:
-    import os
-    import sys
-    import json
-    import urllib
-    import urllib2
-    import glob
     import feedparser
-    import smtplib
-    import time
-    import socket
+    import getpass
+    import glob
+    import json
+    import os
     import pickle
     import platform
-    import getpass
-    from re import compile
-    from subprocess import Popen, PIPE
+    import re
+    import socket
+    import smtplib
+    import sys
+    import time
+    import urllib
+    import urllib2
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     from email.utils import COMMASPACE, formatdate
+    from subprocess import Popen, PIPE
 except ImportError:
     # Checks the installation of the necessary python modules
     print((os.linesep * 2).join(["An error found importing one module:",
@@ -345,7 +345,8 @@ def get_sub(tt_id, tt_intro, sub):
                     idx_line = '{0}'.format(caption_idx)
                     time_line = '{0} --> {1}'.format(srt_time(start),
                                 srt_time(end))
-                    text_line = '{0}'.format(caption['content'])
+                    text_line = '{0}'.format(caption['content'].
+                                             encode('utf-8'))
                     srt_content += '\n'.join([idx_line, time_line, text_line,
                                              '\n'])
                     caption_idx += 1
@@ -360,7 +361,7 @@ def get_sub(tt_id, tt_intro, sub):
         except ValueError:
             sub_log += ("Subtitle '{0}' it's a malformed json file.{1}".
                         format(sub, os.linesep))
-    return srt_content.encode('utf-8'), sub_log
+    return srt_content, sub_log
 
 
 def check_subs(ttalk, v_name):
@@ -381,7 +382,7 @@ def check_subs(ttalk, v_name):
                                stdout=PIPE).stdout.read()
         else:
             tt_webpage = urllib2.urlopen(ttalk.feedburner_origlink).read()
-        regex = compile('pad_seconds = ([\d|\.]+);')
+        regex = re.compile('pad_seconds = ([\d|\.]+);')
         tt_intro = int(regex.findall(tt_webpage)[0].replace('.', '')) * 10
         subtitle, get_log = get_sub(ttalk.id.split(':')[-1], tt_intro, sub)
         s_log += get_log
