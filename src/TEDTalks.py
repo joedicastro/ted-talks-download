@@ -29,8 +29,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "08/11/2012"
-__version__ = "1.8"
+__date__ = "09/11/2012"
+__version__ = "1.9"
 
 try:
     import feedparser
@@ -51,6 +51,7 @@ try:
     from email.mime.multipart import MIMEMultipart
     from email.utils import COMMASPACE, formatdate
     from subprocess import Popen, PIPE
+    from textwrap import fill
 except ImportError:
     # Checks the installation of the necessary python modules
     print((os.linesep * 2).join(["An error found importing one module:",
@@ -403,7 +404,7 @@ def get_video(ttk, vid_url, vid_name):
     v_log = u'{0} ({1})\n'.format(ttk.subtitle, ttk.itunes_duration)
     v_log += u'{0}\n\n'.format('=' * (len(ttk.subtitle) + 11))
     v_log += u'{0}\n\n'.format(ttk.feedburner_origlink)
-    v_log += u'{0}\n\n'.format(ttk.content[0].value)
+    v_log += u'{0}\n\n'.format(fill(ttk.content[0].value, 80))
     v_log += u'file://{0}\n'.format(os.path.join(os.getcwd(), vid_name))
     vid_size = best_unit_size(int(ttk.media_content[0]['filesize']))
     v_log += u'{0:.2f} {1}\n\n'.format(vid_size['s'], vid_size['u'])
