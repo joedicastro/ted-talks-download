@@ -29,8 +29,8 @@
 
 __author__ = "joe di castro - joe@joedicastro.com"
 __license__ = "GNU General Public License version 3"
-__date__ = "09/11/2012"
-__version__ = "1.9"
+__date__ = "21/11/2012"
+__version__ = "2.0"
 
 try:
     import feedparser
@@ -47,6 +47,7 @@ try:
     import time
     import urllib
     import urllib2
+    from argparse import ArgumentParser
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     from email.utils import COMMASPACE, formatdate
@@ -258,6 +259,19 @@ class Logger():
             log_file.write(self.__log)
 
 
+def arguments():
+    """Defines the command line arguments for the script."""
+    desc = """Automate download new HD TED Talks by its RSS Feed"""
+
+    parser = ArgumentParser(description=desc)
+    parser.add_argument("path", default=os.getcwd(), nargs='?',
+                        help="The path to store the TED Talks videos")
+    parser.add_argument("-v", "--version", action="version",
+                        version="%(prog)s {0}".format(__version__),
+                        help="show program's version number and exit")
+    return parser
+
+
 def check_exec_posix(prog):
     """Check if the program is installed in a *NIX platform.
 
@@ -414,18 +428,9 @@ def get_video(ttk, vid_url, vid_name):
 def main():
     """main section"""
 
-#==============================================================================
-# SCRIPT PARAMETERS
-#==============================================================================
-
-    # The directory to store the videos and subs.
-    # For Windows change the character '\' for the character '/', I know is
-    # akward but is because how escape strings python
-    ttalk_vid_dir = '/your/path/to/TED/Talks/Videos'
-
-#==============================================================================
-# END PARAMETERS
-#==============================================================================
+    # The directory to store the videos and subs
+    args = arguments().parse_args()
+    ttalk_vid_dir = args.path
 
     # initalize the log
     log = Logger()
