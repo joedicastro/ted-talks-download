@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf8 -*-
 
 """
@@ -178,8 +178,8 @@ def main():
     (opts, args) = options().parse_args()
 
     # regex expressions to search into the webpage
-    regex_intro = re.compile('pad_seconds = ([\d|\.]+);')
-    regex_id = re.compile('talkID = (\d+);')
+    regex_intro = re.compile('introDuration%22%3A(\d+)%2C')
+    regex_id = re.compile('talkId%22%3A(\d+)%2C')
     regex_url = re.compile('id="no-flash-video-download" href="(.+)"')
     regex_vid = re.compile('http://.+\/(.*\.mp4)')
 
@@ -199,8 +199,8 @@ def main():
                                                 tedtalk_webpage).read()
         if ttalk_webpage:
             try:
-                ttalk_intro = int(regex_intro.findall(ttalk_webpage)[0].
-                                  replace('.', '')) * 10
+                ttalk_intro = ((int(regex_intro.findall(ttalk_webpage)[0]) + 1)
+                               * 1000)
                 ttalk_id = int(regex_id.findall(ttalk_webpage)[0])
                 ttalk_url = regex_url.findall(ttalk_webpage)[0]
                 ttalk_url = ttalk_url.replace('.mp4', '-480p.mp4')
