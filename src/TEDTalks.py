@@ -325,8 +325,9 @@ def get_sub(tt_id, tt_intro, sub):
     def srt_time(tst):
         """Format Time from TED Subtitles format to SRT time Format."""
         secs, mins, hours = ((tst / 1000) % 60), (tst / 60000), (tst / 3600000)
-        right_srt_time = "{0:02d}:{1:02d}:{2:02d},000".format(hours, mins,
-                                                              secs)
+        right_srt_time = ("{0:02d}:{1:02d}:{2:02d},{3:3.0f}".
+                          format(int(hours), int(mins), int(secs),
+                                 divmod(secs, 1)[1] * 1000))
         return right_srt_time
 
     srt_content = ''
@@ -397,8 +398,8 @@ def check_subs(ttalk, v_name):
                                stdout=PIPE).stdout.read()
         else:
             tt_webpage = urllib2.urlopen(ttalk.feedburner_origlink).read()
-        regex = re.compile('introDuration%22%3A(\d+)%2C')
-        tt_intro = (int(regex.findall(tt_webpage)[0]) + 1) * 1000
+        regex = re.compile('introDuration%22%3A(\d+\.?\d+)%2C')
+        tt_intro = (float(regex.findall(tt_webpage)[0]) + 1) * 1000
         subtitle, get_log = get_sub(ttalk.id.split(':')[-1], tt_intro, sub)
         s_log += get_log
         if subtitle:

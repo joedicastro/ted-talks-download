@@ -95,8 +95,9 @@ def get_sub(tt_id, tt_intro, sub):
     def srt_time(tst):
         """Format Time from TED Subtitles format to SRT time Format."""
         secs, mins, hours = ((tst / 1000) % 60), (tst / 60000), (tst / 3600000)
-        right_srt_time = "{0:02d}:{1:02d}:{2:02d},000".format(hours, mins,
-                                                              secs)
+        right_srt_time = ("{0:02d}:{1:02d}:{2:02d},{3:3.0f}".
+                          format(int(hours), int(mins), int(secs),
+                                 divmod(secs, 1)[1] * 1000))
         return right_srt_time
 
     srt_content = ''
@@ -178,7 +179,7 @@ def main():
     (opts, args) = options().parse_args()
 
     # regex expressions to search into the webpage
-    regex_intro = re.compile('introDuration%22%3A(\d+)%2C')
+    regex_intro = re.compile('introDuration%22%3A(\d+\.?\d+)%2C')
     regex_id = re.compile('talkId%22%3A(\d+)%2C')
     regex_url = re.compile('id="no-flash-video-download" href="(.+)"')
     regex_vid = re.compile('http://.+\/(.*\.mp4)')
@@ -199,8 +200,8 @@ def main():
                                                 tedtalk_webpage).read()
         if ttalk_webpage:
             try:
-                ttalk_intro = ((int(regex_intro.findall(ttalk_webpage)[0]) + 1)
-                               * 1000)
+                ttalk_intro = ((float(regex_intro.findall(ttalk_webpage)[0])
+                                + 1) * 1000)
                 ttalk_id = int(regex_id.findall(ttalk_webpage)[0])
                 ttalk_url = regex_url.findall(ttalk_webpage)[0]
                 ttalk_url = ttalk_url.replace('.mp4', '-480p.mp4')
