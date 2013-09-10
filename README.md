@@ -140,12 +140,7 @@ Oliver's talk for the one we want the download
 
 ## How to get them
 
-The code is hosted in a [Mercurial](http://selenic.com/mercurial) (hg)
-repository at BitBucket, use this to get a clone:
-
-    hg clone http://bitbucket.org/joedicastro/ted-talks-download
-
-Also is hosted in a Git repository at GitHub, use this to get a clone:
+The code is hosted in a Git repository at GitHub, use this to get a clone:
 
     git clone git://github.com/joedicastro/ted-talks-download.git
 

@@ -151,13 +151,7 @@ de la charla de Oliver por la que deseemos descargar.
 
 ## Como obtenerlos
 
-El código está alojado en un repositorio de
-[Mercurial](http://selenic.com/mercurial) (hg) en BitBucket, así que puedes
-clonarlo directamente así:
-
-    hg clone http://bitbucket.org/joedicastro/ted-talks-download
-
-También está alojado en un repositorio Git en GitHub, emplea este comando para
+El código está alojado en un repositorio Git en GitHub, emplea este comando para
 poder clonarlo:
 
     git clone git://github.com/joedicastro/ted-talks-download.git
