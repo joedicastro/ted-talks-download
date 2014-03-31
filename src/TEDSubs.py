@@ -179,9 +179,9 @@ def main():
     (opts, args) = options().parse_args()
 
     # regex expressions to search into the webpage
-    regex_intro = re.compile('introDuration%22%3A(\d+\.?\d+)%2C')
-    regex_id = re.compile('talkId%22%3A(\d+)%2C')
-    regex_url = re.compile('id="no-flash-video-download" href="(.+)"')
+    regex_intro = re.compile('"introDuration":(\d+\.?\d+),')
+    regex_id = re.compile('"id":(\d+),')
+    regex_url = re.compile('"nativeDownloads":.*"high":"(.+)\?.+},"sub')
     regex_vid = re.compile('http://.+\/(.*\.mp4)')
 
     if not args:
@@ -204,7 +204,6 @@ def main():
                                 + 1) * 1000)
                 ttalk_id = int(regex_id.findall(ttalk_webpage)[0])
                 ttalk_url = regex_url.findall(ttalk_webpage)[0]
-                ttalk_url = ttalk_url.replace('.mp4', '-480p.mp4')
                 ttalk_vid = regex_vid.findall(ttalk_url)[0]
             except IndexError:
                 print('Maybe this video is not available for download.')
